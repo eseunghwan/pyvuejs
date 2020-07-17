@@ -16,4 +16,3 @@ This package was created with Cookiecutter and the `cs01/cookiecutter-pypackage`
 [Cookiecutter](https://github.com/audreyr/cookiecutter)
 
 [cs01/cookiecutter-pypackage](https://github.com/cs01/cookiecutter-pypackage)
-
