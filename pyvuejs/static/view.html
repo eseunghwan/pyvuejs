@@ -1,0 +1,22 @@
+<!DOCTYPE HTML5>
+<html>
+    <head>
+        <link rel="shortcut icon" href="/static/facivon.ico">
+        <script type="text/javascript" src="/static/vue.js"></script>
+        <!-- <script type="text/javascript" src="/static/vue.min.js"></script> -->
+        <script type="text/javascript" src="/static/pyvue.js"></script>
+        <style>
+            {$viewStyle}
+        </style>
+        <script>
+            {$viewScript}
+        </script>
+    </head>
+    <body style="width:100vw;height:100vh;margin:0px auto;overflow:hidden;">
+        {$viewBody}
+
+        <script>
+            pyvue.init("{$viewName}", ["{$viewModels}"]);
+        </script>
+    </body>
+</html>
