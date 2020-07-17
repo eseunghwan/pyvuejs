@@ -2,7 +2,7 @@
 <p align="center">
 
 <a href="https://pypi.python.org/pypi/pyvuejs">
-<img src="https://img.shields.io/pypi/v/pyvue.svgjs" /></a>
+<img src="https://img.shields.io/pypi/v/pyvuejs.svg" /></a>
 <a href="https://travis-ci.org/eseunghwan/pyvuejs"><img src="https://travis-ci.org/eseunghwan/pyvuejs.svg?branch=master" /></a>
 </p>
 Pythonic Vue.js MPA Toolkit
