@@ -1,4 +1,4 @@
-# pyvue
+<h1 style="font-size:50px;">pyvuejs</h1>
 <p align="center">
 
 <a href="https://pypi.python.org/pypi/pyvuejs">
