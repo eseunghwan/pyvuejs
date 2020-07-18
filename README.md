@@ -1,4 +1,4 @@
-<h1 style="font-size:50px;">pyvuejs</h1>
+# pyvuejs
 <p align="center">
 
 <a href="https://pypi.python.org/pypi/pyvuejs">
@@ -10,11 +10,11 @@
 <br>
 
 # Install
-## using pip
+### using pip
 ```powershell
 pip install pyvuejs
 ```
-## from git
+### from git
 ```powershell
 git clone https://github.com/eseunghwan/pyvuejs.git
 cd pyvuejs
@@ -25,7 +25,7 @@ python setup.py install
 <br>
 
 # Usage
-## create project with cli
+- ### create project with cli
 ```powershell
 python -m pyvuejs init
 
@@ -35,8 +35,8 @@ AppName:
 ```
 <br>
 
-## move to project directory and start with cli
-- ### default host = "0.0.0.0", port = 8000
+- ### move to project directory and start with cli
+- default host = "0.0.0.0", port = 8000
 ```powershell
 python -m pyvuejs start
 
@@ -47,18 +47,18 @@ Running on http://0.0.0.0:8000 (CTRL + C to quit)
 ```
 <br>
 
-## start command line options
-- ### host only
+### start command line options
+- host only
 ```powershell
 python -m pyvuejs start 127.0.0.1
 ```
 
-- ### port only
+- port only
 ```powershell
 python -m pyvuejs start 9000
 ```
 
-- ### both host and port
+- both host and port
 ```powershell
 python -m pyvuejs start 127.0.0.1 9000
 ```
@@ -67,11 +67,11 @@ python -m pyvuejs start 127.0.0.1 9000
 <br>
 
 # PVUE editing guide
-- ### pvue file is a single view file against with vue file
+### pvue file is a single view file against with vue file
 <br>
 
-## prefix(<i>optional</i>, default = "view")
-- ### prefix defines pvue is view or component
+### prefix(<i>optional</i>, default = "view")
+- prefix defines pvue is view or component
 ```html
 <!-- if pvue is view -->
 !prefix view
@@ -81,9 +81,9 @@ python -m pyvuejs start 127.0.0.1 9000
 ```
 <br>
 
-## template(<b>required</b>)
-- ### template block is shown part of pvue
-- ### code style is very same as <b>Vue.js</b>
+### template(<b>required</b>)
+- template block is shown part of pvue
+- code style is very same as <b>Vue.js</b>
 ```html
 <template>
     <div id="app1">
@@ -98,9 +98,9 @@ python -m pyvuejs start 127.0.0.1 9000
 ```
 <br>
 
-## model(<b>required</b>)
-- ### model block is server-side part of pvue
-- ### code style is <i>python</i>, it's sensitive to <b>tabs</b>
+### model(<b>required</b>)
+- model block is server-side part of pvue
+- code style is <i>python</i>, it's sensitive to <b>tabs</b>
 ```python
 <model>
 Model app1:
@@ -114,7 +114,7 @@ Model app1:
         self.testVar -= 1
 </model>
 ```
-- ### connect to vue properties
+- connect to vue properties
     - currently, <b>computed</b> and <b>method</b> are enable
     - add decorator on top of function
     ```python
@@ -124,8 +124,8 @@ Model app1:
     ```
 <br>
 
-## style(<i>optional</i>)
-- ### style block is style part of template block
+### style(<i>optional</i>)
+- style block is style part of template block
 ```html
 <style>
 div#app1 {
@@ -135,9 +135,9 @@ div#app1 {
 ```
 <br>
 
-## script(<i>optional</i>)
-- ### script block runs in page
-- ### custom events, attributes can be set in script block
+### script(<i>optional</i>)
+- script block runs in page
+- custom events, attributes can be set in script block
 ```html
 <script>
     /* scripts */
@@ -151,7 +151,7 @@ div#app1 {
 - [x] enable componenting(V 0.2.0)
 - [x] multi locational data binding(V 0.2.0)
 - [x] dataSession (V 0.2.0)
-- ### add vue properties
+- add vue properties
     - [x] method (V 0.1.0)
     - [x] computed (V 0.2.0)
     - [ ] watch
@@ -160,16 +160,18 @@ div#app1 {
 <br>
 
 # License
-### pyvuejs is MIT license
+pyvuejs is MIT license
 
 <br>
 <br>
 
 # Release History
-* ### V 0.1.0 [2020/07/17]
+- V 0.1.0 [2020/07/17]
     - initial commit
+<br>
+<br>
 
-* ### V 0.2.0 [2020/07/18]
+- V 0.2.0 [2020/07/18]
     - enable componenting
     - multi locational data binding
     - add <b>computed</b> binding
