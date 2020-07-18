@@ -169,7 +169,6 @@ pyvuejs is MIT license
 - V 0.1.0 [2020/07/17]
     - initial commit
 <br>
-<br>
 
 - V 0.2.0 [2020/07/18]
     - enable componenting
