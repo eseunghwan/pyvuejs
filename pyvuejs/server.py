@@ -5,13 +5,7 @@ class Server():
     def __init__(self, appDir:str):
         import os, string, json
         from quart import Quart, websocket
-        from password_generator import PasswordGenerator
         from copy import deepcopy
-
-        self.__rpg = PasswordGenerator()
-        self.__rpg.minlen = 10
-        self.__rpg.maxlen = 10
-        self.__rpg.minschars = 0
 
         self.__appSession = {}
         self.__dataSession = {}
@@ -31,46 +25,36 @@ class Server():
 
                 if res["state"] == "success":
                     if res["job"] == "open":
-                        setId:bool = False
-                        viewId:str = self.__generate_id()
-                        if res["id"] == "null":
-                            self.__appSession[viewId] = {}
-                            setId = True
-                        else:
-                            if res["id"] in self.__appSession.keys():
-                                viewId = res["id"]
-                            else:
-                                self.__appSession[viewId] = {}
-                                setId = True
+                        if not res["id"] in self.__appSession.keys():
+                            self.__appSession[res["id"]] = {}
 
-                        if not viewId in self.__dataSession.keys():
-                            self.__dataSession[viewId] = {}
+                        if not res["id"] in self.__dataSession.keys():
+                            self.__dataSession[res["id"]] = {}
 
                         if self.__get_view_type(res["name"]) == "view":
-                            self.__appSession[viewId][res["name"]] = deepcopy(self.__views[res["name"]])
+                            self.__appSession[res["id"]][res["name"]] = deepcopy(self.__views[res["name"]])
                         elif self.__get_view_type(res["name"]) == "component":
-                            self.__appSession[viewId][res["name"]] = deepcopy(self.__components[res["name"]])
+                            self.__appSession[res["id"]][res["name"]] = deepcopy(self.__components[res["name"]])
 
                         await self.__send_ws(
                             {
                                 "job": "init",
                                 "state": "success",
-                                "setId": setId,
-                                "id": viewId,
+                                "id": res["id"],
                                 "data": {
                                     modelName: {
                                         vName: var.value
                                         for vName, var in model.variables.items()
                                     }
-                                    for modelName, model in self.__appSession[viewId][res["name"]].models.items()
+                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
                                 },
                                 "computes": {
                                     modelName: list(model.computes.keys())
-                                    for modelName, model in self.__appSession[viewId][res["name"]].models.items()
+                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
                                 },
                                 "methods": {
                                     modelName: list(model.methods.keys())
-                                    for modelName, model in self.__appSession[viewId][res["name"]].models.items()
+                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
                                 }
                             }
                         )
@@ -101,9 +85,9 @@ class Server():
                                             exec("model.{} = value".format(variable))
 
                                         if res["job"] == "compute":
-                                            model.computes[res["compute"]](model, self.__dataSession[res["id"]])
+                                            model.computes[res["compute"]](self.__dataSession[res["id"]])
                                         elif res["job"] == "method":
-                                            model.methods[res["method"]](model, self.__dataSession[res["id"]])
+                                            model.methods[res["method"]](self.__dataSession[res["id"]])
 
                                     await self.__send_ws(
                                         {
@@ -220,6 +204,11 @@ class Server():
                                         lineSplit = [item for item in line.split("=")]
                                         modelLines[mlIdx] = "{0} = Variable({1})".format(lineSplit[0], lineSplit[1].strip())
 
+                                insertSpace = modelLines[1].replace(modelLines[1].strip(), "")
+                                modelLines.insert(1, insertSpace + "compute = binder.compute")
+                                modelLines.insert(1, insertSpace + "method = binder.method")
+                                modelLines.insert(1, insertSpace + "binder = Binder()")
+
                                 modelBlocks[modelLines[0][6:-8]] = "\n".join(modelLines)
 
                             pvInfo[key] = modelBlocks
@@ -235,13 +224,6 @@ class Server():
                 pvInfo["prefix"] = "view"
 
             return pvInfo
-
-    def __generate_id(self) -> str:
-        viewId = self.__rpg.generate()
-        if viewId in self.__appSession.keys():
-            viewId = self.__generate_id()
-
-        return viewId
 
     def __get_view_type(self, name:str) -> str:
         if name in self.__views.keys():
@@ -279,19 +261,19 @@ def {0}():
 
     def start(self, host:str = "0.0.0.0", port:int = 8000):
         import os
-        from quart import render_template_string
+        from quart import request
 
         @self.__app.route("/views/<viewName>")
         def showView(viewName):
             if viewName in self.__views.keys():
-                return self.__views[viewName].render()
+                return self.__views[viewName].render(request.remote_addr)
             else:
                 return ""
 
         @self.__app.route("/components/<viewName>")
         def showComponent(viewName):
             if viewName in self.__components.keys():
-                return self.__components[viewName].render()
+                return self.__components[viewName].render(request.remote_addr)
             else:
                 return ""
 

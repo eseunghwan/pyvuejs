@@ -37,8 +37,7 @@ setup(
     packages=["pyvuejs", "pyvuejs/static"],
     setup_requires=[
         "quart",
-        "pyinstaller",
-        "random-password-generator"
+        "pyinstaller"
     ],
     url="https://github.com/eseunghwan/pyvuejs",
     version=__version__,

@@ -108,7 +108,7 @@ Model app1:
     testVar = 10
 
     # compute methods
-    @testVar.connect("method")
+    @method
     # to use session, add "session" argument to function
     def sub_testVar(self, session):
         self.testVar -= 1
@@ -118,7 +118,7 @@ Model app1:
     - currently, <b>computed</b> and <b>method</b> are enable
     - add decorator on top of function
     ```python
-    @sample.connect("method")
+    @method
     def get_sample(self):
         self.sample = "It's sample!"
     ```
@@ -175,3 +175,7 @@ pyvuejs is MIT license
     - multi locational data binding
     - add <b>computed</b> binding
     - dataSession
+
+- V 0.2.1 [2020/07/19]
+    - change decoration as "@method", "@compute"
+    - multi locational strategy changed to IP from idGeneration

@@ -85,12 +85,58 @@ class Variable():
 
         return decorator
 
-class Model():
+class Binder():
     def __init__(self):
-        self.__variableNames = []
+        self.__variables = []
+        self.__methods = []
+        self.__computes = []
+
+    @property
+    def variables(self):
+        return self.__variables
+
+    @property
+    def methods(self):
+        return self.__methods
+
+    @property
+    def computes(self):
+        return self.__computes
+
+    def variable(self, variable) -> bool:
+        if not variable in self.__variables:
+            self.__variables.append(variable)
+            return True
+        else:
+            return False
+
+    def method(self, func):
+        def decorator(func):
+            if not func.__name__ in self.__methods:
+                self.__methods.append(func.__name__)
+
+            return func
+
+        return decorator(func)
+
+    def compute(self, func):
+        def decorator(func):
+            if not func.__name__ in self.__computes:
+                self.__computes.append(func.__name__)
+
+            return func
+
+        return decorator(func)
+
+class Model():
+    binder = Binder()
+    method = binder.method
+    compute = binder.compute
+
+    def __init__(self):
         for mname in [mname for mname in dir(self) if not mname in ("name", "variables")]:
             if isinstance(eval("self.{}".format(mname)), Variable):
-                self.__variableNames.append(mname)
+                self.binder.variable(mname)
 
     @property
     def name(self) -> str:
@@ -99,7 +145,7 @@ class Model():
     @property
     def variables(self) -> dict:
         variableInfo = {}
-        for varName in self.__variableNames:
+        for varName in self.binder.variables:
             variableInfo[varName] = eval("self.{}".format(varName))
 
         return variableInfo
@@ -107,22 +153,16 @@ class Model():
     @property
     def computes(self) -> dict:
         computeInfo = {}
-        for varName in self.__variableNames:
-            compute = eval("self.{}".format(varName)).compute
-            
-            if not compute == None:
-                computeInfo[compute.__name__] = compute
+        for computeName in self.binder.computes:
+            computeInfo[computeName] = eval("self.{}".format(computeName))
 
         return computeInfo
 
     @property
     def methods(self) -> dict:
         methodInfo = {}
-        for varName in self.__variableNames:
-            method = eval("self.{}".format(varName)).method
-            
-            if not method == None:
-                methodInfo[method.__name__] = method
+        for methodName in self.binder.methods:
+            methodInfo[methodName] = eval("self.{}".format(methodName))
 
         return methodInfo
 
@@ -148,6 +188,15 @@ class View():
         ).replace(
             "{$viewBody}", templateText
         )
+        if self.__prefix == "view":
+            for line in self.__renderedText.split("\n"):
+                if line.strip().startswith("<component ") and "name" in line:
+                    componentName = line[11:-1].split("=")[1][1:-1]
+
+                    self.__renderedText = self.__renderedText.replace(
+                        line,
+                        '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;"></object></div>'.format(componentName)
+                    )
 
         self.__models = {}
         for modelName, modelText in modelTextInfo.items():
@@ -166,15 +215,5 @@ class View():
     def models(self) -> dict:
         return self.__models
 
-    def render(self) -> str:
-        if self.__prefix == "view":
-            for line in self.__renderedText.split("\n"):
-                if line.strip().startswith("<component ") and "name" in line:
-                    componentName = line[11:-1].split("=")[1][1:-1]
-
-                    self.__renderedText = self.__renderedText.replace(
-                        line,
-                        '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;"></object></div>'.format(componentName)
-                    )
-
-        return self.__renderedText
+    def render(self, viewId:str) -> str:
+        return self.__renderedText.replace("{$viewId}", viewId)

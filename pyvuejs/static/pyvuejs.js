@@ -1,8 +1,8 @@
-var initLoad = true;
 
 var pyvuejs = {
     // parameters
     __vms: null,
+    __id: null,
     __name: null,
     __prefix: null,
     __modelNames: null,
@@ -10,8 +10,9 @@ var pyvuejs = {
     __ws: null,
 
     // functions
-    init: (viewName, viewPrefix, modelNames, template) => {
+    init: (viewId, viewName, viewPrefix, modelNames, template) => {
         this.__vms = {};
+        this.__id = viewId;
         this.__name = viewName;
         this.__prefix = viewPrefix;
         this.__modelNames = modelNames;
@@ -19,7 +20,7 @@ var pyvuejs = {
 
         this.__ws = new WebSocket(`ws://127.0.0.1:${location.port}/ws`);
         this.__ws.addEventListener("open", (ev) => {
-            pyvuejs.open(sessionStorage.getItem(this.__name), this.__name);
+            pyvuejs.open(this.__id, this.__name);
         });
         this.__ws.addEventListener("close", (ev) => {
             pyvuejs.close(this.__id, this.__name);
@@ -33,14 +34,6 @@ var pyvuejs = {
         
             if (req.job == "init")
             {
-                if (req.setId) {
-                    this.__id = req.id;
-                    sessionStorage.setItem(this.__name, req.id);
-                }
-                else {
-                    this.__id = sessionStorage.getItem(this.__name);
-                }
-
                 if (this.__id == req.id) {
                     for (var model in req.data) {
                         var computeInfo = {};
