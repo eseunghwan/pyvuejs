@@ -25,7 +25,7 @@ python setup.py install
 <br>
 
 # Usage
-- ### create project with cli
+### create project with cli
 ```powershell
 python -m pyvuejs init
 
@@ -35,7 +35,7 @@ AppName:
 ```
 <br>
 
-- ### move to project directory and start with cli
+### move to project directory and start with cli
 - default host = "0.0.0.0", port = 8000
 ```powershell
 python -m pyvuejs start
