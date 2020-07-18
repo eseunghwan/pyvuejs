@@ -148,9 +148,9 @@ div#app1 {
 <br>
 
 # Todo
-- ### [x] enable componenting(V 0.2.0)
-- ### [x] multi locational data binding(V 0.2.0)
-- ### [x] dataSession (V 0.2.0)
+- [x] enable componenting(V 0.2.0)
+- [x] multi locational data binding(V 0.2.0)
+- [x] dataSession (V 0.2.0)
 - ### add vue properties
     - [x] method (V 0.1.0)
     - [x] computed (V 0.2.0)
