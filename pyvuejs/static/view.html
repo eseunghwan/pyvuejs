@@ -2,9 +2,10 @@
 <html>
     <head>
         <link rel="shortcut icon" href="/static/facivon.ico">
-        <script type="text/javascript" src="/static/vue.js"></script>
-        <!-- <script type="text/javascript" src="/static/vue.min.js"></script> -->
-        <script type="text/javascript" src="/static/pyvue.js"></script>
+        <!-- <script type="text/javascript" src="/static/vue.js"></script> -->
+        <script type="text/javascript" src="/static/vue.min.js"></script>
+        <script type="text/javascript" src="/static/pyvuejs.js"></script>
+        {$viewResource}
         <style>
             {$viewStyle}
         </style>
@@ -16,7 +17,7 @@
         {$viewBody}
 
         <script>
-            pyvue.init("{$viewName}", ["{$viewModels}"]);
+            pyvuejs.init("{$viewName}", "view", ["{$viewModels}"]);
         </script>
     </body>
 </html>

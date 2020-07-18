@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages  # type: ignore
+from pyvuejs import __version__
 
 with open("README.md") as readme_file:
     readme = readme_file.read()
@@ -36,10 +37,10 @@ setup(
     packages=["pyvuejs", "pyvuejs/static"],
     setup_requires=[
         "quart",
-        "lxml",
-        "pyinstaller"
+        "pyinstaller",
+        "random-password-generator"
     ],
     url="https://github.com/eseunghwan/pyvuejs",
-    version="0.1.0",
+    version=__version__,
     zip_safe=False,
 )

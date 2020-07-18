@@ -3,7 +3,8 @@
 class Variable():
     def __init__(self, value):
         self.__value = value
-        # self.__name = self.__class__.__name__
+        self.__compute = None
+        self.__method = None
 
     def __repr__(self):
         return repr(self.__value)
@@ -20,17 +21,17 @@ class Variable():
 
         self.__value = newValue
 
-    # @property
-    # def name(self) -> str:
-    #     return self.__name
-
-    # @name.setter
-    # def name(self, newName:str):
-    #     self.__name = newName
-
     @property
     def value(self):
         return self.__value
+
+    @property
+    def compute(self):
+        return self.__compute
+
+    @property
+    def method(self):
+        return self.__method
 
     def __add__(self, other):
         if isinstance(other, Variable):
@@ -73,16 +74,23 @@ class Variable():
 
         return self.__value == other
 
-    # def compute(self):
-    #     pass
+    def connect(self, mType):
+        def decorator(method):
+            if mType == "compute":
+                self.__compute = method
+            else:
+                self.__method = method
+
+            return method
+
+        return decorator
 
 class Model():
     def __init__(self):
-        self.__variables = {}
-
-        for mname in dir(self):
+        self.__variableNames = []
+        for mname in [mname for mname in dir(self) if not mname in ("name", "variables")]:
             if isinstance(eval("self.{}".format(mname)), Variable):
-                self.__variables[mname] = eval("self.{}".format(mname))
+                self.__variableNames.append(mname)
 
     @property
     def name(self) -> str:
@@ -90,18 +98,49 @@ class Model():
 
     @property
     def variables(self) -> dict:
-        return self.__variables
+        variableInfo = {}
+        for varName in self.__variableNames:
+            variableInfo[varName] = eval("self.{}".format(varName))
+
+        return variableInfo
+
+    @property
+    def computes(self) -> dict:
+        computeInfo = {}
+        for varName in self.__variableNames:
+            compute = eval("self.{}".format(varName)).compute
+            
+            if not compute == None:
+                computeInfo[compute.__name__] = compute
+
+        return computeInfo
+
+    @property
+    def methods(self) -> dict:
+        methodInfo = {}
+        for varName in self.__variableNames:
+            method = eval("self.{}".format(varName)).method
+            
+            if not method == None:
+                methodInfo[method.__name__] = method
+
+        return methodInfo
 
 class View():
-    def __init__(self, name:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):
+    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):
         from lxml.html import fromstring, tostring
-        from .static import baseView
+        from .static import baseView, baseComponent
 
         self.__name = name
+        self.__prefix = prefix
+
+        # self.__renderedText = eval("base{}".format(prefix.capitalize())).replace(
         self.__renderedText = baseView.replace(
             "{$viewName}", self.__name
         ).replace(
             "{$viewModels}", "\", \"".join(list(modelTextInfo.keys()))
+        ).replace(
+            "{$viewResource}", resourceText
         ).replace(
             "{$viewStyle}", styleText
         ).replace(
@@ -120,8 +159,22 @@ class View():
         return self.__name
 
     @property
+    def prefix(self) -> str:
+        return self.__prefix
+
+    @property
     def models(self) -> dict:
         return self.__models
 
     def render(self) -> str:
+        if self.__prefix == "view":
+            for line in self.__renderedText.split("\n"):
+                if line.strip().startswith("<component ") and "name" in line:
+                    componentName = line[11:-1].split("=")[1][1:-1]
+
+                    self.__renderedText = self.__renderedText.replace(
+                        line,
+                        '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;"></object></div>'.format(componentName)
+                    )
+
         return self.__renderedText
