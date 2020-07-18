@@ -67,7 +67,7 @@ python -m pyvuejs start 127.0.0.1 9000
 <br>
 
 # PVUE editing guide
-### pvue file is a single view file against with vue file
+pvue file is a single view file against with vue file
 <br>
 
 ### prefix(<i>optional</i>, default = "view")
