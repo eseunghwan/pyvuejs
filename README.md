@@ -179,3 +179,11 @@ pyvuejs is MIT license
 - V 0.2.1 [2020/07/19]
     - change decoration as "@method", "@compute"
     - multi locational strategy changed to IP from idGeneration
+
+- V 0.2.2 [2020/07/19]
+    - bug fixes
+    - parsing errors if model block is empy
+
+- V 0.2.2.Rev1
+    - bug fixes
+    - show default favicon correctly
