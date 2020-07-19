@@ -153,7 +153,7 @@ class Server():
                 "style": "",
                 "template": "",
                 "script": "",
-                "model": []
+                "model": {}
             }
             for key in pvInfo.keys():
                 try:
@@ -172,8 +172,6 @@ class Server():
                         ]
 
                         if key == "model":
-                            modelBlocks = {}
-
                             lineNums = []
                             for idx in range(len(blockStripLines)):
                                 line = blockStripLines[idx]
@@ -209,9 +207,7 @@ class Server():
                                 modelLines.insert(1, insertSpace + "method = binder.method")
                                 modelLines.insert(1, insertSpace + "binder = Binder()")
 
-                                modelBlocks[modelLines[0][6:-8]] = "\n".join(modelLines)
-
-                            pvInfo[key] = modelBlocks
+                                pvInfo[key][modelLines[0][6:-8]] = "\n".join(modelLines)
                         else:
                             pvInfo[key] = "\n".join(blockStripLines)
 

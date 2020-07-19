@@ -18,7 +18,10 @@ setup(
     ],
     description="Pythonic Vue.js",
     entry_points={"console_scripts": ["pyvuejs=pyvuejs.cli:main",],},
-    install_requires=[],
+    install_requires=[
+        "quart",
+        "pyinstaller"
+    ],
     license="MIT license",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -35,10 +38,7 @@ setup(
     keywords="vue",
     name="pyvuejs",
     packages=["pyvuejs", "pyvuejs/static"],
-    setup_requires=[
-        "quart",
-        "pyinstaller"
-    ],
+    setup_requires=[],
     url="https://github.com/eseunghwan/pyvuejs",
     version=__version__,
     zip_safe=False,

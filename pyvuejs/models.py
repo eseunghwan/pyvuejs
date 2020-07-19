@@ -168,7 +168,6 @@ class Model():
 
 class View():
     def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):
-        from lxml.html import fromstring, tostring
         from .static import baseView, baseComponent
 
         self.__name = name
