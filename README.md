@@ -149,12 +149,12 @@ div#app1 {
 
 # Todo
 - [x] enable componenting(V 0.2.0)
+    - [ ] component properties
 - [x] multi locational data binding(V 0.2.0)
 - [x] dataSession (V 0.2.0)
 - add vue properties
     - [x] method (V 0.1.0)
     - [x] computed (V 0.2.0)
-    - [ ] watch
 
 <br>
 <br>
@@ -187,3 +187,7 @@ pyvuejs is MIT license
 - V 0.2.2.Rev1
     - bug fixes
     - show default favicon correctly
+
+- V 0.2.2.Rev2
+    - remove "Variable" model
+    - change component's default size to 100% of parent

@@ -1,90 +1,5 @@
 # -*- coding: utf-8 -*-
 
-class Variable():
-    def __init__(self, value):
-        self.__value = value
-        self.__compute = None
-        self.__method = None
-
-    def __repr__(self):
-        return repr(self.__value)
-
-    def __str__(self):
-        return str(self.__value)
-
-    def __get__(self, instance, owner):
-        return self
-
-    def __set__(self, instance, newValue):
-        if isinstance(newValue, Variable):
-            newValue = newValue.value
-
-        self.__value = newValue
-
-    @property
-    def value(self):
-        return self.__value
-
-    @property
-    def compute(self):
-        return self.__compute
-
-    @property
-    def method(self):
-        return self.__method
-
-    def __add__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        self.__value = self.__value + other
-        return self
-
-    def __sub__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        self.__value = self.__value - other
-        return self
-
-    def __mul__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        self.__value = self.__value * other
-        return self
-
-    def __truediv__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        self.__value = self.__value / other
-        return self
-
-    def __floordiv__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        self.__value = self.__value // other
-        return self
-
-    def __eq__(self, other):
-        if isinstance(other, Variable):
-            other = other.value
-
-        return self.__value == other
-
-    def connect(self, mType):
-        def decorator(method):
-            if mType == "compute":
-                self.__compute = method
-            else:
-                self.__method = method
-
-            return method
-
-        return decorator
-
 class Binder():
     def __init__(self):
         self.__variables = []
@@ -133,11 +48,6 @@ class Model():
     method = binder.method
     compute = binder.compute
 
-    def __init__(self):
-        for mname in [mname for mname in dir(self) if not mname in ("name", "variables")]:
-            if isinstance(eval("self.{}".format(mname)), Variable):
-                self.binder.variable(mname)
-
     @property
     def name(self) -> str:
         return self.__class__.__name__
@@ -145,8 +55,10 @@ class Model():
     @property
     def variables(self) -> dict:
         variableInfo = {}
-        for varName in self.binder.variables:
-            variableInfo[varName] = eval("self.{}".format(varName))
+        for mname in dir(self):
+            if not mname in ("binder", "method", "compute", "name", "variables", "computes", "methods") and not mname.startswith("__") and not mname.startswith("_Model__"):
+                if not mname in self.binder.computes and not mname in self.binder.methods:
+                    variableInfo[mname] = eval("self.{}".format(mname))
 
         return variableInfo
 
@@ -187,15 +99,15 @@ class View():
         ).replace(
             "{$viewBody}", templateText
         )
-        if self.__prefix == "view":
-            for line in self.__renderedText.split("\n"):
-                if line.strip().startswith("<component ") and "name" in line:
-                    componentName = line[11:-1].split("=")[1][1:-1]
+        # if self.__prefix == "view":
+        #     for line in self.__renderedText.split("\n"):
+        #         if line.strip().startswith("<component ") and "name" in line:
+        #             componentName = line[11:-1].split("=")[1][1:-1]
 
-                    self.__renderedText = self.__renderedText.replace(
-                        line,
-                        '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;"></object></div>'.format(componentName)
-                    )
+        #             self.__renderedText = self.__renderedText.replace(
+        #                 line,
+        #                 '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;width:100%;height:100%;"></object></div>'.format(componentName)
+        #             )
 
         self.__models = {}
         for modelName, modelText in modelTextInfo.items():

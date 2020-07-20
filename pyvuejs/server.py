@@ -43,7 +43,7 @@ class Server():
                                 "id": res["id"],
                                 "data": {
                                     modelName: {
-                                        vName: var.value
+                                        vName: var
                                         for vName, var in model.variables.items()
                                     }
                                     for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
@@ -98,7 +98,7 @@ class Server():
                                             "view": res["view"],
                                             "model": model.name,
                                             "vars": {
-                                                vName: var.value
+                                                vName: var
                                                 for vName, var in model.variables.items()
                                             }
                                         }
@@ -148,6 +148,12 @@ class Server():
         with open(pvFile, "r", encoding = "utf-8") as pvr:
             pvt = pvr.read()
 
+            prefixLine = pvt.split("\n")[0]
+            if prefixLine.startswith("!prefix"):
+                prefix = prefixLine[8:]
+            else:
+                prefix = "view"
+
             pvInfo = {
                 "resource": "",
                 "style": "",
@@ -171,7 +177,18 @@ class Server():
                             for line in lines
                         ]
 
-                        if key == "model":
+                        if key == "template":
+                            if prefix == "view":
+                                for idx in range(len(blockStripLines)):
+                                    line = blockStripLines[idx]
+                                    if line.strip().startswith("<component ") and "name" in line:
+                                        componentName = line[11:-1].split("=")[1][1:-1]
+                                        tabSpace = line.replace(line.strip(), "")
+
+                                        blockStripLines[idx] = tabSpace + '<object type="text/html" data="/components/{}" style="overflow:hidden;width:100%;height:100%;"></object>'.format(componentName)
+
+                            pvInfo[key] = "\n".join(blockStripLines)
+                        elif key == "model":
                             lineNums = []
                             for idx in range(len(blockStripLines)):
                                 line = blockStripLines[idx]
@@ -193,14 +210,14 @@ class Server():
                                 if modelLines[-1] == "":
                                     modelLines.pop(-1)
 
-                                for mlIdx in range(1, len(modelLines)):
-                                    line = modelLines[mlIdx]
-                                    if line.strip().startswith("def ") or line.strip().startswith("@"):
-                                        break
+                                # for mlIdx in range(1, len(modelLines)):
+                                #     line = modelLines[mlIdx]
+                                #     if line.strip().startswith("def ") or line.strip().startswith("@"):
+                                #         break
 
-                                    if not line == "":
-                                        lineSplit = [item for item in line.split("=")]
-                                        modelLines[mlIdx] = "{0} = Variable({1})".format(lineSplit[0], lineSplit[1].strip())
+                                #     if not line == "":
+                                #         lineSplit = [item for item in line.split("=")]
+                                #         modelLines[mlIdx] = "{0} = Variable({1})".format(lineSplit[0], lineSplit[1].strip())
 
                                 insertSpace = modelLines[1].replace(modelLines[1].strip(), "")
                                 modelLines.insert(1, insertSpace + "compute = binder.compute")
@@ -212,12 +229,7 @@ class Server():
                             pvInfo[key] = "\n".join(blockStripLines)
 
             pvInfo["name"] = os.path.splitext(os.path.basename(pvFile))[0]
-
-            prefixLine = pvt.split("\n")[0]
-            if prefixLine.startswith("!prefix"):
-                pvInfo["prefix"] = prefixLine[8:]
-            else:
-                pvInfo["prefix"] = "view"
+            pvInfo["prefix"] = prefix
 
             return pvInfo
 
@@ -230,7 +242,10 @@ class Server():
     async def __send_ws(self, sendInfo:dict):
         import json
 
-        await self.__websocket.send(json.dumps(sendInfo))
+        try:
+            await self.__websocket.send(json.dumps(sendInfo))
+        except:
+            print(sendInfo)
 
     async def __get_ws(self) -> dict:
         import json
