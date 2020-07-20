@@ -106,12 +106,17 @@ pvue file is a single view file against with vue file
 Model app1:
     # variables
     testVar = 10
+    # to upload variable too session
+    sharedVar:session = 30
 
     # compute methods
     @method
     # to use session, add "session" argument to function
     def sub_testVar(self, session):
         self.testVar -= 1
+
+        # defined by ":session", use it without define to session in code
+        print(session["sharedVar"])
 </model>
 ```
 - connect to vue properties
@@ -184,10 +189,13 @@ pyvuejs is MIT license
     - bug fixes
     - parsing errors if model block is empy
 
-- V 0.2.2.Rev1
+- V 0.2.2.Rev1 [2020/07/19]
     - bug fixes
     - show default favicon correctly
 
-- V 0.2.2.Rev2
+- V 0.2.2.Rev2 [2020/07/20]
     - remove "Variable" model
     - change component's default size to 100% of parent
+
+- V 0.2.2.Rev3 [2020/07/20]
+    - variables can upload to session by adding ":session" when it's definition

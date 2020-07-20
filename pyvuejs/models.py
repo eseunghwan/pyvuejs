@@ -48,6 +48,21 @@ class Model():
     method = binder.method
     compute = binder.compute
 
+    def __init__(self):
+        from copy import deepcopy
+
+        self.__mayVariables = [mname for mname in dir(self) if not mname in ("binder", "session", "method", "compute", "name", "variables", "sessions", "computes", "methods") and not mname.startswith("__") and not mname.startswith("_Model__")]
+        self.__sessions = {}
+        for varName in self.__mayVariables:
+            if varName.startswith("session_"):
+                varNameVisible = varName[8:]
+                exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
+
+                self.__mayVariables.remove(varName)
+                self.__mayVariables.append(varNameVisible)
+
+                self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
+
     @property
     def name(self) -> str:
         return self.__class__.__name__
@@ -55,12 +70,15 @@ class Model():
     @property
     def variables(self) -> dict:
         variableInfo = {}
-        for mname in dir(self):
-            if not mname in ("binder", "method", "compute", "name", "variables", "computes", "methods") and not mname.startswith("__") and not mname.startswith("_Model__"):
-                if not mname in self.binder.computes and not mname in self.binder.methods:
-                    variableInfo[mname] = eval("self.{}".format(mname))
+        for varName in self.__mayVariables:
+            if not varName in self.binder.computes and not varName in self.binder.methods:
+                variableInfo[varName] = eval("self.{}".format(varName))
 
         return variableInfo
+
+    @property
+    def sessions(self) -> dict:
+        return self.__sessions
 
     @property
     def computes(self) -> dict:

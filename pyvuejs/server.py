@@ -36,6 +36,10 @@ class Server():
                         elif self.__get_view_type(res["name"]) == "component":
                             self.__appSession[res["id"]][res["name"]] = deepcopy(self.__components[res["name"]])
 
+                        for model in self.__appSession[res["id"]][res["name"]].models.values():
+                            for varName, var in model.sessions.items():
+                                self.__dataSession[res["id"]][varName] = var
+
                         await self.__send_ws(
                             {
                                 "job": "init",
@@ -210,14 +214,14 @@ class Server():
                                 if modelLines[-1] == "":
                                     modelLines.pop(-1)
 
-                                # for mlIdx in range(1, len(modelLines)):
-                                #     line = modelLines[mlIdx]
-                                #     if line.strip().startswith("def ") or line.strip().startswith("@"):
-                                #         break
-
-                                #     if not line == "":
-                                #         lineSplit = [item for item in line.split("=")]
-                                #         modelLines[mlIdx] = "{0} = Variable({1})".format(lineSplit[0], lineSplit[1].strip())
+                                for mlIdx in range(1, len(modelLines)):
+                                    line = modelLines[mlIdx]
+                                    if ":session" in line:
+                                        varName = line.split(":session")[0].strip()
+                                        modelLines[mlIdx] = line.replace(
+                                            varName + ":session",
+                                            "session_" + varName
+                                        )
 
                                 insertSpace = modelLines[1].replace(modelLines[1].strip(), "")
                                 modelLines.insert(1, insertSpace + "compute = binder.compute")
