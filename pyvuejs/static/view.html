@@ -17,7 +17,7 @@
         {$viewBody}
 
         <script>
-            pyvuejs.init("{$viewId}", "{$viewName}", "view", ["{$viewModels}"]);
+            (new pyvuejs("{$viewId}", "{$viewName}", "view", ["{$viewModels}"])).init();
         </script>
     </body>
 </html>
