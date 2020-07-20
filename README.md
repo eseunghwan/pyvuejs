@@ -89,7 +89,9 @@ pvue file is a single view file against with vue file
     <div id="app1">
         <!-- elements -->
         <p>{{ testVar }}</p>
-        <button>[buttonText]</button>
+        <!-- to use session values -->
+        <p>{{ session.sharedVar }}</p>
+        <button>click me!</button>
 
         <!-- if show components -->
         <component name="[componentName]">
@@ -197,5 +199,10 @@ pyvuejs is MIT license
     - remove "Variable" model
     - change component's default size to 100% of parent
 
-- V 0.2.2.Rev3 [2020/07/20]
+- V 0.2.2.Rev3
+    - depricated
+    - revoke changed and upgrade to Rev4
+
+- V 0.2.2.Rev4 [2020/07/20]
     - variables can upload to session by adding ":session" when it's definition
+    - session variables can be used in template by calling "sesssion" dictionary

@@ -36,6 +36,9 @@ var pyvuejs = {
             {
                 if (this.__id == req.id) {
                     for (var model in req.data) {
+                        var vm_data = req.data[model];
+                        vm_data["session"] = req.data.session;
+
                         var computeInfo = {};
                         for (var idx in req.computes[model]) {
                             var compute = req.computes[model][idx];
@@ -82,8 +85,18 @@ var pyvuejs = {
         });
     },
     update: (model, variable, value) => {
-        var valueString = typeof(value) == "string" ? `"${value}"` : value;
-        eval(`this.__vms.${model}.${variable} = ${valueString}`);
+        if (variable == "session") {
+            for (var varName in value) {
+                var varReal = value[varName];
+                var valueString = typeof(varReal) == "string" ? `"${varReal}"` : varReal;
+
+                eval(`this.__vms.session.${varName} = ${valueString}`);
+            }
+        }
+        else {
+            var valueString = typeof(value) == "string" ? `"${value}"` : value;
+            eval(`this.__vms.${model}.${variable} = ${valueString}`);
+        }
     },
     get: (model, variable) => {
         return eval(`this.__vms.${model}.${variable}`);

@@ -40,18 +40,21 @@ class Server():
                             for varName, var in model.sessions.items():
                                 self.__dataSession[res["id"]][varName] = var
 
+                        send_data_set = {
+                            modelName: {
+                                vName: var
+                                for vName, var in model.variables.items()
+                            }
+                            for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
+                        }
+                        send_data_set["session"] = self.__dataSession[res["id"]]
+
                         await self.__send_ws(
                             {
                                 "job": "init",
                                 "state": "success",
                                 "id": res["id"],
-                                "data": {
-                                    modelName: {
-                                        vName: var
-                                        for vName, var in model.variables.items()
-                                    }
-                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
-                                },
+                                "data": send_data_set,
                                 "computes": {
                                     modelName: list(model.computes.keys())
                                     for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
@@ -93,6 +96,12 @@ class Server():
                                         elif res["job"] == "method":
                                             model.methods[res["method"]](self.__dataSession[res["id"]])
 
+                                    update_data = {
+                                        vName: var
+                                        for vName, var in model.variables.items()
+                                    }
+                                    update_data["session"] = self.__dataSession[res["id"]]
+
                                     await self.__send_ws(
                                         {
                                             "job": "update",
@@ -101,10 +110,7 @@ class Server():
                                             "id": res["id"],
                                             "view": res["view"],
                                             "model": model.name,
-                                            "vars": {
-                                                vName: var
-                                                for vName, var in model.variables.items()
-                                            }
+                                            "vars": update_data
                                         }
                                     )
                 else:
