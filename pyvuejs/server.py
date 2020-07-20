@@ -192,7 +192,7 @@ class Server():
                                 for idx in range(len(blockStripLines)):
                                     line = blockStripLines[idx]
                                     if line.strip().startswith("<component ") and "name" in line:
-                                        componentName = line[11:-1].split("=")[1][1:-1]
+                                        componentName = line[11:-2].split("=")[1].strip()[1:-1]
                                         tabSpace = line.replace(line.strip(), "")
 
                                         blockStripLines[idx] = tabSpace + '<object type="text/html" data="/components/{}" style="overflow:hidden;width:100%;height:100%;"></object>'.format(componentName)

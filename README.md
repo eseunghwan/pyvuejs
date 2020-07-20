@@ -94,7 +94,7 @@ pvue file is a single view file against with vue file
         <button>click me!</button>
 
         <!-- if show components -->
-        <component name="[componentName]">
+        <component name="[componentName]" />
     </div>
 </template>
 ```
@@ -201,8 +201,12 @@ pyvuejs is MIT license
 
 - V 0.2.2.Rev3
     - depricated
-    - revoke changed and upgrade to Rev4
+    - revoke changes and upgrade to Rev4
 
 - V 0.2.2.Rev4 [2020/07/20]
     - variables can upload to session by adding ":session" when it's definition
     - session variables can be used in template by calling "sesssion" dictionary
+
+- V 0.2.2.Rev5 [2020/07/20]
+    - change component parsing logic
+    - component tag format changed to "<component name=\"[componentName]\" />"
