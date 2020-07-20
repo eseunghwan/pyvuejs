@@ -18,10 +18,7 @@ setup(
     ],
     description="Pythonic Vue.js",
     entry_points={"console_scripts": ["pyvuejs=pyvuejs.cli:main",],},
-    install_requires=[
-        "quart",
-        "pyinstaller"
-    ],
+    install_requires=open("requirements.txt").readlines(),
     license="MIT license",
     long_description=readme,
     long_description_content_type="text/markdown",

@@ -86,7 +86,7 @@ class Model():
     def variables(self) -> dict:
         variableInfo = {}
         for varName in self.__mayVariables:
-            if not varName in self.binder.computes and not varName in self.binder.methods and not varName in self.binder.events.values():
+            if not varName in self.binder.computes and not varName in self.binder.methods and not varName in self.__sessions.keys() and not varName in self.binder.events.values():
                 variableInfo[varName] = eval("self.{}".format(varName))
 
         return variableInfo

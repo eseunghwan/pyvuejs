@@ -1,29 +1,39 @@
 
-var pyvuejs = {
-    // parameters
-    __vms: null,
-    __id: null,
-    __name: null,
-    __prefix: null,
-    __modelNames: null,
-    __template: null,
-    __ws: null,
-
-    // functions
-    init: (viewId, viewName, viewPrefix, modelNames, template) => {
+class pyvuejs {
+    constructor(id, name, prefix, models) {
         this.__vms = {};
-        this.__id = viewId;
-        this.__name = viewName;
-        this.__prefix = viewPrefix;
-        this.__modelNames = modelNames;
-        this.__template = template;
-
+        this.__id = id;
+        this.__name = name;
+        this.__prefix = prefix;
+        this.__models = models;
         this.__ws = new WebSocket(`ws://127.0.0.1:${location.port}/ws`);
+    }
+
+    __genMethod(model, fType, fName) {
+        if (fType == "compute") {
+            return () => {
+                this.__compute(model, fName);
+            }
+        }
+        else {
+            return () => {
+                this.__method(model, fName);
+            }
+        }
+    }
+
+    init() {
         this.__ws.addEventListener("open", (ev) => {
-            pyvuejs.open(this.__id, this.__name);
-        });
-        this.__ws.addEventListener("close", (ev) => {
-            pyvuejs.close(this.__id, this.__name);
+            this.__ws.send(
+                JSON.stringify(
+                    {
+                        job: "open",
+                        state: "success",
+                        id: this.__id,
+                        name: this.__name
+                    }
+                )
+            );
         });
         this.__ws.addEventListener("message", (ev) => {
             var req = JSON.parse(ev.data);
@@ -34,47 +44,52 @@ var pyvuejs = {
         
             if (req.job == "init")
             {
-                if (this.__id == req.id) {
-                    for (var model in req.data) {
-                        var vm_data = req.data[model];
-                        vm_data["session"] = req.data.session;
+                if (req.id == this.__id && req.name == this.__name) {
+                    for (var mIdx in this.__models) {
+                        var model = this.__models[mIdx];
+                        if (req.data[model] != undefined) {
+                            var vm_data = req.data[model];
+                            vm_data["session"] = req.session;
 
-                        var computeInfo = {};
-                        for (var idx in req.computes[model]) {
-                            var compute = req.computes[model][idx];
-                            computeInfo[compute] = pyvuejs.__genMethod(model, "compute", compute);
-                        }
+                            var computeInfo = {};
+                            for (var idx in req.computes[model]) {
+                                var compute = req.computes[model][idx];
+                                computeInfo[compute] = this.__genMethod(model, "compute", compute);
+                            }
 
-                        var methodInfo = {};
-                        for (var idx in req.methods[model]) {
-                            var method = req.methods[model][idx];
-                            methodInfo[method] = pyvuejs.__genMethod(model, "method", method);
+                            var methodInfo = {};
+                            for (var idx in req.methods[model]) {
+                                var method = req.methods[model][idx];
+                                methodInfo[method] = this.__genMethod(model, "method", method);
+                            }
+        
+                            this.__vms[model] = new Vue({
+                                el: "#" + model,
+                                data: vm_data,
+                                computed: computeInfo,
+                                methods: methodInfo
+                            });
                         }
-    
-                        this.__vms[model] = new Vue({
-                            el: "#" + model,
-                            data: req.data[model],
-                            computed: computeInfo,
-                            methods: methodInfo
-                        });
                     }
                 }
             }
             else if (req.job == "update")
             {
                 if (req.id == this.__id && req.view == this.__name) {
-                    if (req.direction == "view")
-                    {
-                        for (var variable in req.vars) {
-                            pyvuejs.update(req.model, variable, req.vars[variable]);
+                    if (this.__models.indexOf(req.model) != -1) {
+                        if (req.direction == "view")
+                        {
+                            for (var variable in req.vars) {
+                                this.__update(req.model, variable, req.vars[variable]);
+                            }
                         }
-                    }
-                    else {
-                        res["variable"] = {};
-                        for (var index in req.variable) {
-                            var name = req.variable[index];
+                        else {
+                            res["variable"] = {};
+                            for (var index in req.variable) {
+                                var name = req.variable[index];
 
-                            res.variable[name] = pyvuejs.get(req.model, name);
+                                res.variable[name] = this.__get(req.model, name);
+                            }
                         }
                     }
                 }
@@ -83,25 +98,38 @@ var pyvuejs = {
             res["id"] = this.__id;
             this.__ws.send(JSON.stringify(res));
         });
-    },
-    update: (model, variable, value) => {
+    }
+
+    __update(model, variable, value)  {
         if (variable == "session") {
             for (var varName in value) {
                 var varReal = value[varName];
-                var valueString = typeof(varReal) == "string" ? `"${varReal}"` : varReal;
 
-                eval(`this.__vms.session.${varName} = ${valueString}`);
+                if (typeof(varReal) == "object") {
+                    eval(`this.__vms.${model}.session.${varName} = varReal`);
+                }
+                else {
+                    var valueString = typeof(varReal) == "string" ? `"${varReal}"` : varReal;
+                    eval(`this.__vms.${model}.session.${varName} = ${valueString}`);
+                }
             }
         }
         else {
-            var valueString = typeof(value) == "string" ? `"${value}"` : value;
-            eval(`this.__vms.${model}.${variable} = ${valueString}`);
+            if (typeof(value) == "object") {
+                eval(`this.__vms.${model}.${variable} = value`);
+            }
+            else {
+                var valueString = typeof(value) == "string" ? `"${value}"` : value;
+                eval(`this.__vms.${model}.${variable} = ${valueString}`);
+            }
         }
-    },
-    get: (model, variable) => {
+    }
+
+    __get(model, variable) {
         return eval(`this.__vms.${model}.${variable}`);
-    },
-    compute: (model, compute) => {
+    }
+
+    __compute(model, compute) {
         this.__ws.send(JSON.stringify(
             {
                 job: "compute",
@@ -111,13 +139,9 @@ var pyvuejs = {
                 compute: compute
             }
         ));
+    }
 
-        // var iframes = document.getElementsByTagName("iframe");
-        // for (var idx = 0; idx < iframes.length; idx++) {
-        //     iframes[idx].contentWindow.location.reload(true);
-        // }
-    },
-    method: (model, method) => {
+    __method(model, method) {
         this.__ws.send(JSON.stringify(
             {
                 job: "method",
@@ -127,41 +151,5 @@ var pyvuejs = {
                 method: method
             }
         ));
-    },
-    open: (id, name) => {
-        this.__ws.send(
-            JSON.stringify(
-                {
-                    job: "open",
-                    state: "success",
-                    id: id == undefined || id == null ? "null" : id,
-                    name: name
-                }
-            )
-        );
-    },
-    close: (id, name) => {
-        this.__ws.send(
-            JSON.stringify(
-                {
-                    job: "close",
-                    id: id,
-                    name: name,
-                    state: "sucess"
-                }
-            )
-        );
-    },
-    __genMethod: (model, fType, fName) => {
-        if (fType == "compute") {
-            return () => {
-                pyvuejs.compute(model, fName);
-            }
-        }
-        else {
-            return () => {
-                pyvuejs.method(model, fName);
-            }
-        }
     }
-};
+}

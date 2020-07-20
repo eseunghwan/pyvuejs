@@ -24,21 +24,20 @@ class Server():
 
                 if res["state"] == "success":
                     if res["job"] == "open":
-                        send_data_set = {
-                            modelName: {
-                                vName: var
-                                for vName, var in model.variables.items()
-                            }
-                            for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
-                        }
-                        send_data_set["session"] = self.__dataSession[res["id"]]
-
                         await self.__send_ws(
                             {
                                 "job": "init",
                                 "state": "success",
                                 "id": res["id"],
-                                "data": send_data_set,
+                                "name": res["name"],
+                                "session": self.__dataSession[res["id"]],
+                                "data": {
+                                    modelName: {
+                                        vName: var
+                                        for vName, var in model.variables.items()
+                                    }
+                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
+                                },
                                 "computes": {
                                     modelName: list(model.computes.keys())
                                     for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()

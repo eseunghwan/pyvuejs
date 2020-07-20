@@ -253,3 +253,7 @@ pyvuejs is MIT license
         - currently only support for "load", "show" event
     - enabled to import python modules in app's directory
         - base directory of modules is <b>plugins</b>
+
+- V 0.2.2.Rev7 [2020/07/20]
+    - change pyvuejs object to class with constructor
+    - bug fixed
