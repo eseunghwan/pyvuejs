@@ -111,10 +111,21 @@ Model app1:
     # to upload variable too session
     sharedVar:session = 30
 
+    # event bind
+    @event("load")
+    def onApp1Load(self, session):
+        self.testVar = 20
+        # invoke to session variable
+        session["sharedVar"] = 50
+
     # compute methods
     @method
     # to use session, add "session" argument to function
     def sub_testVar(self, session):
+        # can import custom modules from app directory
+        from plugins import *
+
+        # can compute variables
         self.testVar -= 1
 
         # defined by ":session", use it without define to session in code
@@ -122,13 +133,38 @@ Model app1:
 </model>
 ```
 - connect to vue properties
-    - currently, <b>computed</b> and <b>method</b> are enable
+    - currently, <b>computed</b> and <b>method</b> are able
     - add decorator on top of function
     ```python
     @method
     def get_sample(self):
         self.sample = "It's sample!"
     ```
+- bind to events
+    - currently, <b>load</b> and <b>show</b> are able
+    - add event decorator on top of function
+    ```python
+    @event("load")
+    def load_sample(self):
+        print("onload!")
+
+    @event("show")
+    def show_sample(self):
+        print("onshow!")
+    ```
+<br>
+
+### resource(<i>optional</i>)
+- resource block loads app's static files
+- app's static url is <b>"/app"</b>
+```html
+<resource>
+    <!-- css -->
+    <link rel="stylesheet" href="/app/[staticFileName]">
+    <!-- js -->
+    <script type="text/javascript" src="/app/[staticFileName]"></script>
+</resource>
+```
 <br>
 
 ### style(<i>optional</i>)
@@ -210,3 +246,10 @@ pyvuejs is MIT license
 - V 0.2.2.Rev5 [2020/07/20]
     - change component parsing logic
     - component tag format changed to "<component name=\"[componentName]\" />"
+
+- V 0.2.2.Rev6 [2020/07/20]
+    - move multi locational strategy to initial viewpoints
+    - add event bind decoration as "@event"
+        - currently only support for "load", "show" event
+    - enabled to import python modules in app's directory
+        - base directory of modules is <b>plugins</b>

@@ -5,18 +5,23 @@ class Binder():
         self.__variables = []
         self.__methods = []
         self.__computes = []
+        self.__events = {}
 
     @property
-    def variables(self):
+    def variables(self) -> list:
         return self.__variables
 
     @property
-    def methods(self):
+    def methods(self) -> list:
         return self.__methods
 
     @property
-    def computes(self):
+    def computes(self) -> list:
         return self.__computes
+
+    @property
+    def events(self) -> dict:
+        return self.__events
 
     def variable(self, variable) -> bool:
         if not variable in self.__variables:
@@ -43,15 +48,25 @@ class Binder():
 
         return decorator(func)
 
+    def event(self, eventType:str):
+        def decorator(func):
+            self.__events[eventType] = func.__name__
+
+            return func
+
+        return decorator
+
 class Model():
     binder = Binder()
     method = binder.method
     compute = binder.compute
+    event = binder.event
 
     def __init__(self):
         from copy import deepcopy
 
-        self.__mayVariables = [mname for mname in dir(self) if not mname in ("binder", "session", "method", "compute", "name", "variables", "sessions", "computes", "methods") and not mname.startswith("__") and not mname.startswith("_Model__")]
+        excludeList = ["binder", "session", "method", "compute", "event", "name", "variables", "sessions", "computes", "methods", "events"]
+        self.__mayVariables = [mname for mname in dir(self) if not mname in excludeList and not mname.startswith("__") and not mname.startswith("_Model__")]
         self.__sessions = {}
         for varName in self.__mayVariables:
             if varName.startswith("session_"):
@@ -71,7 +86,7 @@ class Model():
     def variables(self) -> dict:
         variableInfo = {}
         for varName in self.__mayVariables:
-            if not varName in self.binder.computes and not varName in self.binder.methods:
+            if not varName in self.binder.computes and not varName in self.binder.methods and not varName in self.binder.events.values():
                 variableInfo[varName] = eval("self.{}".format(varName))
 
         return variableInfo
@@ -95,6 +110,14 @@ class Model():
             methodInfo[methodName] = eval("self.{}".format(methodName))
 
         return methodInfo
+
+    @property
+    def events(self) -> dict:
+        eventInfo = {}
+        for eventType, eventName in self.binder.events.items():
+            eventInfo[eventType] = eval("self.{}".format(eventName))
+
+        return eventInfo
 
 class View():
     def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):

@@ -5,7 +5,6 @@ class Server():
     def __init__(self, appDir:str):
         import os, string, json
         from quart import Quart, websocket
-        from copy import deepcopy
 
         self.__appSession = {}
         self.__dataSession = {}
@@ -25,21 +24,6 @@ class Server():
 
                 if res["state"] == "success":
                     if res["job"] == "open":
-                        if not res["id"] in self.__appSession.keys():
-                            self.__appSession[res["id"]] = {}
-
-                        if not res["id"] in self.__dataSession.keys():
-                            self.__dataSession[res["id"]] = {}
-
-                        if self.__get_view_type(res["name"]) == "view":
-                            self.__appSession[res["id"]][res["name"]] = deepcopy(self.__views[res["name"]])
-                        elif self.__get_view_type(res["name"]) == "component":
-                            self.__appSession[res["id"]][res["name"]] = deepcopy(self.__components[res["name"]])
-
-                        for model in self.__appSession[res["id"]][res["name"]].models.values():
-                            for varName, var in model.sessions.items():
-                                self.__dataSession[res["id"]][varName] = var
-
                         send_data_set = {
                             modelName: {
                                 vName: var
@@ -127,6 +111,7 @@ class Server():
 
         appDirPath = os.path.abspath(appDirPath)
         if os.path.exists(appDirPath):
+            sys.path.append(appDirPath)
             for pvPath in glob(os.path.join(appDirPath, "views", "*.pvue")):
                 pvInfo = self.__parse_pyvue(pvPath)
                 
@@ -230,9 +215,11 @@ class Server():
                                         )
 
                                 insertSpace = modelLines[1].replace(modelLines[1].strip(), "")
-                                modelLines.insert(1, insertSpace + "compute = binder.compute")
-                                modelLines.insert(1, insertSpace + "method = binder.method")
                                 modelLines.insert(1, insertSpace + "binder = Binder()")
+                                modelLines.insert(2, insertSpace + "method = binder.method")
+                                modelLines.insert(3, insertSpace + "compute = binder.compute")
+                                modelLines.insert(4, insertSpace + "event = binder.event")
+                                modelLines.insert(5, "")
 
                                 pvInfo[key][modelLines[0][6:-8]] = "\n".join(modelLines)
                         else:
@@ -283,18 +270,61 @@ def {0}():
     def start(self, host:str = "0.0.0.0", port:int = 8000):
         import os
         from quart import request
+        from copy import deepcopy
 
         @self.__app.route("/views/<viewName>")
         def showView(viewName):
             if viewName in self.__views.keys():
-                return self.__views[viewName].render(request.remote_addr)
+                viewId = request.remote_addr
+                if not viewId in self.__dataSession.keys():
+                    self.__dataSession[viewId] = {}
+
+                if not viewId in self.__appSession.keys():
+                    self.__appSession[viewId] = {}
+
+                if not viewName in self.__appSession[viewId].keys():
+                    self.__appSession[viewId][viewName] = deepcopy(self.__views[viewName])
+
+                    for model in self.__appSession[viewId][viewName].models.values():
+                        for varName, var in model.sessions.items():
+                            self.__dataSession[viewId][varName] = var
+
+                        if "load" in model.events.keys():
+                            model.events["load"](self.__dataSession[viewId])
+
+                for model in self.__appSession[viewId][viewName].models.values():
+                    if "show" in model.events.keys():
+                        model.events["show"](self.__dataSession[viewId])
+
+                return self.__appSession[viewId][viewName].render(viewId)
             else:
                 return ""
 
         @self.__app.route("/components/<viewName>")
         def showComponent(viewName):
             if viewName in self.__components.keys():
-                return self.__components[viewName].render(request.remote_addr)
+                viewId = request.remote_addr
+                if not viewId in self.__dataSession.keys():
+                    self.__dataSession[viewId] = {}
+
+                if not viewId in self.__appSession.keys():
+                    self.__appSession[viewId] = {}
+
+                if not viewName in self.__appSession[viewId].keys():
+                    self.__appSession[viewId][viewName] = deepcopy(self.__components[viewName])
+
+                    for model in self.__appSession[viewId][viewName].models.values():
+                        for varName, var in model.sessions.items():
+                            self.__dataSession[viewId][varName] = var
+
+                        if "load" in model.events.keys():
+                            model.events["load"](self.__dataSession[viewId])
+
+                for model in self.__appSession[viewId][viewName].models.values():
+                    if "show" in model.events.keys():
+                        model.events["show"](self.__dataSession[viewId])
+
+                return self.__appSession[viewId][viewName].render(viewId)
             else:
                 return ""
 
