@@ -264,3 +264,7 @@ pyvuejs is MIT license
     - changes in <b>requirements.txt</b>
     - bug fixed
         - session datas are not sync from view to model
+
+- V 0.3.0.Rev1 [2020/07/21]
+    - bug fixed
+        - session datas changed in vue model are not sync to model

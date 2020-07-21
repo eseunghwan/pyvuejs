@@ -70,6 +70,7 @@ class Server():
             for varName, value in res["variables"].items():
                 exec("model.{} = value".format(varName))
 
+            self.__dataSession[res["id"]] = res["session"]
             model.computes[res["method"]](self.__dataSession[res["id"]])
             
             emit("update", {
@@ -87,6 +88,7 @@ class Server():
             for varName, value in res["variables"].items():
                 exec("model.{} = value".format(varName))
 
+            self.__dataSession[res["id"]] = res["session"]
             model.methods[res["method"]](self.__dataSession[res["id"]])
             
             emit("update", {
