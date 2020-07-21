@@ -40,7 +40,7 @@ python -m pyvuejs init --app=sampleApp
 - default host = "0.0.0.0", port = 8000
 - both <b>host</b> annd <b>port</b> are positional arguments
 ```powershell
-python -m pyvuejs run --host=127.0.0.1 --port=8080
+python .\manage.py run --host=127.0.0.1 --port=8080
 
 [console output]
 [pyvuejs | 2020-07-21T20:54:09Z] INFO: Starting pyvuejs application...
