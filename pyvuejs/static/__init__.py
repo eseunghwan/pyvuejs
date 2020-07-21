@@ -2,8 +2,31 @@
 import os
 from . import __path__
 
-baseView = open(os.path.join(__path__[0], "view.html"), "r", encoding = "utf-8").read()
-baseComponent = open(os.path.join(__path__[0], "component.html"), "r", encoding = "utf-8").read()
+baseView = """
+<!DOCTYPE HTML5>
+<html>
+    <head>
+        <link rel="shortcut icon" href="/static/favicon.ico">
+        <script type="text/javascript" src="/static/socket.io.dev.js"></script>
+        <script type="text/javascript" src="/static/vue.min.js"></script>
+        <script type="text/javascript" src="/static/pyvuejs.js"></script>
+        {$viewResource}
+        <style>
+            {$viewStyle}
+        </style>
+        <script>
+            {$viewScript}
+        </script>
+    </head>
+    <body style="width:100vw;height:100vh;margin:0px auto;overflow:hidden;">
+        {$viewBody}
+
+        <script>
+            (new pyvuejs("{$viewId}", "{$viewName}", "view", ["{$viewModels}"])).init();
+        </script>
+    </body>
+</html>
+"""
 templateZip = os.path.join(__path__[0], "template.zip")
 
 del __path__

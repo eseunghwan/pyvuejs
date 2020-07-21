@@ -27,42 +27,72 @@ python setup.py install
 # Usage
 ### create project with cli
 ```powershell
-python -m pyvuejs init
+python -m pyvuejs init --app=sampleApp
 
-[output]
-//=========== pyvuejs project init ===========//
-AppName: 
+[console output]
+[pyvuejs | 2020-07-21T20:32:24Z] INFO: Creating pyvuejs application...
+[pyvuejs | 2020-07-21T20:32:24Z] INFO: Extracting template files...
+[pyvuejs | 2020-07-21T20:32:24Z] INFO: App "sampleApp" is ready!
 ```
 <br>
 
 ### move to project directory and start with cli
 - default host = "0.0.0.0", port = 8000
+- both <b>host</b> annd <b>port</b> are positional arguments
 ```powershell
-python -m pyvuejs start
+python -m pyvuejs run --host=127.0.0.1 --port=8080
 
-[output]
-//=========== start pyvuejs app ===========//
-Running on http://0.0.0.0:8000 (CTRL + C to quit)
-[2020-07-17 18:46:40,927] Running on 0.0.0.0:8000 over http (CTRL + C to quit)
+[console output]
+[pyvuejs | 2020-07-21T20:54:09Z] INFO: Starting pyvuejs application...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Prepare Server to run app...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Setting function routing points...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Setting socket routing points...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Routing points are ready!
+
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Interpreting app...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Interpreting view files...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: hello.pvue has been interpreted
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Finished!
+
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Linking static files to server...
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Finished!
+
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: App has been ready!
+
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Server is ready!
+
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Server started on "0.0.0.0:8080"
+[pyvuejs | 2020-07-21T20:54:10Z] INFO: Please check Devtool to show data transfers
+
+[web console output]
+[pyvuejs | 2020-07-21T21:01:33Z] INFO: Model 127.0.0.1/main/App created
+[pyvuejs | 2020-07-21T21:01:33Z] INFO: View 127.0.0.1/main loaded
+[pyvuejs | 2020-07-21T21:01:33Z] INFO: Model 127.0.0.1/hello2/App created
+[pyvuejs | 2020-07-21T21:01:33Z] INFO: View 127.0.0.1/hello2 loaded
+[pyvuejs | 2020-07-21T21:01:42Z] INFO: Variables of 127.0.0.1/hello2/App updated
+[pyvuejs | 2020-07-21T21:01:43Z] INFO: Variables of 127.0.0.1/main/App updated
 ```
 <br>
 
-### start command line options
-- host only
+### create, remove resources from cli
+- plugin, folder, file is available by type argument
+- default directory of plugin is <b>plugins</b>
+- default directory of other resources is <b>app root</b>
 ```powershell
-python -m pyvuejs start 127.0.0.1
-```
+<# create #>
+python .\manage.py create --type=plugin --name=plugin1
 
-- port only
-```powershell
-python -m pyvuejs start 9000
-```
+[console output]
+[pyvuejs | 2020-07-21T21:05:55Z] INFO: Creating plugin plugin1...
+[pyvuejs | 2020-07-21T21:05:55Z] INFO: Plugin plugin1 is ready!
 
-- both host and port
-```powershell
-python -m pyvuejs start 127.0.0.1 9000
-```
+<# remove #>
+python .\manage.py remove --type=plugin --name=plugin1
 
+[console output]
+[pyvuejs | 2020-07-21T21:09:09Z] INFO: Removing plugin plugin1...
+[pyvuejs | 2020-07-21T21:09:09Z] INFO: Plugin plugin1 is removed!
+```
 <br>
 <br>
 
@@ -270,3 +300,11 @@ pyvuejs is MIT license
 - V 0.3.0.Rev1 [2020/07/21]
     - bug fixed
         - session datas changed in vue model are not sync to model
+
+- V 0.3.1 [2020/07/21]
+    - cli changed
+        - "init" command is available from module cli
+        - "run", "stop", "create", "remove" commands are moved to <b>manage.py</b>
+    - logger added
+        - server logs <b>server-side</b> loggings only
+        - client(web) logs <b>client-side</b> loggings only

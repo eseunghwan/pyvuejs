@@ -121,12 +121,11 @@ class Model():
 
 class View():
     def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):
-        from .static import baseView, baseComponent
+        from .static import baseView
 
         self.__name = name
         self.__prefix = prefix
 
-        # self.__renderedText = eval("base{}".format(prefix.capitalize())).replace(
         self.__renderedText = baseView.replace(
             "{$viewName}", self.__name
         ).replace(

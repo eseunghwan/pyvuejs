@@ -89,26 +89,23 @@ class pyvuejs {
 
                 if (res.id == viewId && res.excludeName != viewName) {
                     for (var model in vms) {
-                        vms[model].session = res.sessions[viewId][viewName][model];
+                        vms[model].session = res.sessions[viewName][model];
                     }
                 }
             }
         };
         req.open("POST", `http://${document.domain}:${location.port}/session/download`);
-        req.send(JSON.stringify({ id: this.__id }));
+        req.send(JSON.stringify({ id: viewId }));
     }
 
     init() {
-        console.log(this.__id, this.__name);
         this.__socketio = io.connect(`http://${document.domain}:${location.port}/pyvuejsSocket`);
-        this.__socketio.on("feedbackJS", (res) => {
-            if (res.job == "connect") {
-                this.__socketio.emit("initViewPY", {
-                    job: "initView",
-                    id: this.__id,
-                    name: this.__name
-                });
-            }
+        this.__socketio.on("connect", () => {
+            this.__socketio.emit("initViewPY", {
+                job: "initView",
+                id: this.__id,
+                name: this.__name
+            });
         });
         this.__socketio.on("initViewJS", (res) => {
             if (res.id == this.__id && res.name == this.__name) {
@@ -137,7 +134,10 @@ class pyvuejs {
                         methods: methodInfo
                     });
                     this.__upload_session(res.session);
+                    this.log("info", `Model ${this.__id}/${this.__name}/${model} created`);
                 }
+
+                this.log("info", `View ${this.__id}/${this.__name} loaded`);
             }
         });
         this.__socketio.on("update", (res) => {
@@ -151,19 +151,7 @@ class pyvuejs {
                 }
 
                 this.__upload_session(res.session);
-            }
-        });
-        this.__socketio.on("updateSessionJS", (res) => {
-            if (res.id == this.__id && res.name == this.__name) {
-                for (var mIdx in this.__models) {
-                    console.log(res.name, this.__models[mIdx]);
-                    this.__update(this.__models[mIdx], "session", res.session);
-                }
-
-                this.__socketio.emit("feedbackPY", {
-                    job: "updateSessionJS",
-                    state: "success"
-                });
+                this.log("info", `Variables of ${this.__id}/${this.__name}/${res.model} updated`);
             }
         });
 
@@ -248,5 +236,20 @@ class pyvuejs {
         //     res["id"] = this.__id;
         //     this.__ws.send(JSON.stringify(res));
         // });
+    }
+
+    __format_date(datetime) {
+        var year = datetime.getFullYear().toString();
+        var month = ("0" + (datetime.getMonth() + 1)).slice(-2);
+        var date = ("0" + datetime.getDate()).slice(-2);
+        var hour = ("0" + datetime.getHours()).slice(-2);
+        var minute = ("0" + datetime.getMinutes()).slice(-2);
+        var second = ("0" + datetime.getSeconds()).slice(-2);
+
+        return `${year}-${month}-${date}T${hour}:${minute}:${second}Z`;
+    }
+
+    log(level, content) {
+        console.log(`[pyvuejs | ${this.__format_date(new Date())}] ${level.toUpperCase()}: ${content}`);
     }
 }
