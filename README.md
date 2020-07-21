@@ -195,6 +195,7 @@ div#app1 {
     - [ ] component properties
 - [x] multi locational data binding(V 0.2.0)
 - [x] dataSession (V 0.2.0)
+- [ ] sync variables during method runs
 - add vue properties
     - [x] method (V 0.1.0)
     - [x] computed (V 0.2.0)
@@ -258,6 +259,7 @@ pyvuejs is MIT license
     - change pyvuejs object to class with constructor
     - bug fixed
         - pyvuejs calls other view's models also
+<br>
 
 - V 0.3.0 [2020/07/21]
     - change backend server to flask from quart
