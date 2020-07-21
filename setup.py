@@ -25,6 +25,7 @@ setup(
     package_data={
         "": [
             "*.ico",
+            "*.png",
             "*.css",
             "*.js",
             "*.js.map",

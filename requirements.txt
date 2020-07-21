@@ -4,3 +4,4 @@ gevent
 gevent-websocket
 requests
 pyinstaller
+PySide2

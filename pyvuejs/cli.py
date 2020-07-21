@@ -38,10 +38,6 @@ def main(args):
                 raise RuntimeError("Application is already started!")
 
         if "manage.py" in dirList and "views" in dirList:
-            Logger.info("Starting pyvuejs application...")
-            if not "static" in dirList:
-                Logger.info("Static files are missing!")
-
             con = sqlite3.connect(stateFile, check_same_thread = False)
             cursor = con.cursor()
             cursor.execute("create table `state` (`PORT` INT);")
@@ -50,8 +46,24 @@ def main(args):
             cursor.close()
             con.close()
 
-            from .server import Server
-            Server(os.getcwd()).start(args["host"], int(args["port"]))
+            if args["mode"] == "server":
+                Logger.info("Starting pyvuejs application...")
+                if not "static" in dirList:
+                    Logger.info("Static files are missing!")
+
+                from .server import Server
+                Server(os.getcwd(), args["logging"] == "enable").start(args["host"], int(args["port"]))
+            elif args["mode"] == "standalone":
+                window_size = [int(item) for item in args["window_size"].split(",")]
+                if len(window_size) < 2:
+                    window_size = [window_size[0], window_size[0]]
+                elif len(window_size) == 0:
+                    window_size = [900, 600]
+
+                from .server import WindowedServer
+                WindowedServer(args["logging"] == "enable").start(os.getcwd(), args["host"], int(args["port"]), window_size)
+            else:
+                raise RuntimeError("Unknown mode {}, available modes are \"server\", \"standalone\"".format(args["mode"]))
         else:
             raise RuntimeError("Required files are missing! Please check \"manage.py\" file and \"views\" directory!")
 
@@ -110,6 +122,9 @@ def main(args):
             if os.path.exists(targetFile):
                 os.remove(targetFile)
                 Logger.info("File {0} is removed!".format(args["name"]))
+
+    elif args["job"] == "build":
+        raise RuntimeError("Build is not available now!")
 
 if __name__ == "__main__":
     sys.exit(main(sys.argv))  # pragma: no cover

@@ -7,6 +7,9 @@ baseView = """
 <html>
     <head>
         <link rel="shortcut icon" href="/static/favicon.ico">
+        <link rel="icon" href="/static/favicon.png">
+        <link rel="shortcut icon" href="/app/favicon.ico">
+        <link rel="icon" href="/app/favicon.png">
         <script type="text/javascript" src="/static/socket.io.dev.js"></script>
         <script type="text/javascript" src="/static/vue.min.js"></script>
         <script type="text/javascript" src="/static/pyvuejs.js"></script>

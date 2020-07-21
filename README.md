@@ -38,7 +38,7 @@ python -m pyvuejs init --app=sampleApp
 
 ### move to project directory and start with cli
 - default host = "0.0.0.0", port = 8000
-- both <b>host</b> annd <b>port</b> are positional arguments
+- both <b>host</b> and <b>port</b> are positional arguments
 ```powershell
 python .\manage.py run --host=127.0.0.1 --port=8080
 
@@ -71,6 +71,33 @@ python .\manage.py run --host=127.0.0.1 --port=8080
 [pyvuejs | 2020-07-21T21:01:33Z] INFO: View 127.0.0.1/hello2 loaded
 [pyvuejs | 2020-07-21T21:01:42Z] INFO: Variables of 127.0.0.1/hello2/App updated
 [pyvuejs | 2020-07-21T21:01:43Z] INFO: Variables of 127.0.0.1/main/App updated
+```
+<br>
+
+### start standalone mode
+- switch mode to <b>standalone</b>
+- size of window can be adjusted by <b>window-size</b> argument
+- host and port options are available
+- using <b>PySide2's WebEngineView</b>
+```powershell
+python .\manage.py run --host=127.0.0.1 --port=8080 --mode=standalone --window-size=900,600
+
+[console output]
+[pyvuejs | 2020-07-22T00:13:01Z] INFO: Start server on background...
+[pyvuejs | 2020-07-22T00:13:01Z] INFO: Setting up webview...
+[pyvuejs | 2020-07-22T00:13:01Z] INFO: Starting pyvuejs application...
+[pyvuejs | 2020-07-22T00:13:03Z] INFO: Webview is loaded
+[pyvuejs | 2020-07-22T00:13:09Z] INFO: Shutting down background server...
+```
+<br>
+
+### stop server from cli
+- server can be closed by cli
+```powershell
+python .\manage.py stop
+
+[server console output]
+[pyvuejs | 2020-07-21T21:01:44Z] INFO: App is shutting down...
 ```
 <br>
 
@@ -308,3 +335,10 @@ pyvuejs is MIT license
     - logger added
         - server logs <b>server-side</b> loggings only
         - client(web) logs <b>client-side</b> loggings only
+
+- V 0.3.2 [2020/07/22]
+    - standalone mode added
+        - use PySide2 WebEngineView as UI
+    - "logging" option added
+        - if <b>enable</b>, server log to console
+        - if not, server doesn't log to console
