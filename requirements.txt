@@ -1,3 +1,5 @@
-quart
+flask
+Flask-SocketIO
+gevent
+gevent-websocket
 pyinstaller
-requests

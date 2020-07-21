@@ -3,101 +3,127 @@ from . import __path__
 
 class Server():
     def __init__(self, appDir:str):
-        import os, string, json
-        from quart import Quart, websocket
+        import os, json
+        from flask import Flask, request, jsonify
+        from flask_socketio import SocketIO, emit
 
         self.__appSession = {}
         self.__dataSession = {}
+        self.__dataSessionExcludes = {
+            "id": "",
+            "name": ""
+        }
         self.__views = {}
         self.__components = {}
-        self.__app = Quart(
+        self.__app = Flask(
             "pyvue",
             static_folder = os.path.join(__path__[0], "static"),
             template_folder = os.path.join(__path__[0], "static")
         )
-        self.__websocket = websocket
+        self.__app.secret_key = "pyvuejsApp"
+        self.__socketio = SocketIO(self.__app)
 
-        @self.__app.websocket("/ws")
-        async def ws():
-            while True:
-                res = await self.__get_ws()
+        @self.__socketio.on("connect", namespace = "/pyvuejsSocket")
+        def onConnect():
+            emit("feedbackJS", {
+                "job": "connect",
+                "state": "success"
+            })
 
-                if res["state"] == "success":
-                    if res["job"] == "open":
-                        await self.__send_ws(
-                            {
-                                "job": "init",
-                                "state": "success",
-                                "id": res["id"],
-                                "name": res["name"],
-                                "session": self.__dataSession[res["id"]],
-                                "data": {
-                                    modelName: {
-                                        vName: var
-                                        for vName, var in model.variables.items()
-                                    }
-                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
-                                },
-                                "computes": {
-                                    modelName: list(model.computes.keys())
-                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
-                                },
-                                "methods": {
-                                    modelName: list(model.methods.keys())
-                                    for modelName, model in self.__appSession[res["id"]][res["name"]].models.items()
-                                }
-                            }
-                        )
-                    elif res["job"] == "close":
-                        self.__appSession.pop(res["id"])
-                    elif res["job"] in ("compute", "method"):
-                        targetView = self.__appSession[res["id"]][res["view"]]
-                        targetModel = targetView.models[res["model"]]
+        @self.__socketio.on("disconnect", namespace = "/pyvuejsSocket")
+        def onDisconnect():
+            emit("feedbackJS", {
+                "job": "disconnect",
+                "state": "success"
+            })
 
-                        for viewInfo in self.__appSession.values():
-                            for view in viewInfo.values():
-                                for model in view.models.values():
-                                    await self.__send_ws(
-                                        {
-                                            "job": "update",
-                                            "state": "success",
-                                            "direction": "model",
-                                            "id": res["id"],
-                                            "view": res["view"],
-                                            "model": res["model"],
-                                            "variable": list(model.variables.keys())
-                                        }
-                                    )
+        @self.__socketio.on("feedbackPY", namespace = "/pyvuejsSocket")
+        def onFeedback(res):
+            print(res)
 
-                                    if view == targetView and model == targetModel:
-                                        getRes = await self.__get_ws()
-                                        for variable, value in getRes["variable"].items():
-                                            exec("model.{} = value".format(variable))
+        @self.__socketio.on("initViewPY", namespace = "/pyvuejsSocket")
+        def onInitView(res):
+            # if res["id"] in self.__appSession.keys():
+            view = self.__appSession[res["id"]][res["name"]]
+            emit("initViewJS", {
+                "id": res["id"],
+                "name": res["name"],
+                "session": self.__dataSession[res["id"]],
+                "data": {
+                    modelName: model.variables
+                    for modelName, model in view.models.items()
+                },
+                "computes": {
+                    modelName: list(model.computes.keys())
+                    for modelName, model in view.models.items()
+                },
+                "methods": {
+                    modelName: list(model.methods.keys())
+                    for modelName, model in view.models.items()
+                }
+            })
 
-                                        if res["job"] == "compute":
-                                            model.computes[res["compute"]](self.__dataSession[res["id"]])
-                                        elif res["job"] == "method":
-                                            model.methods[res["method"]](self.__dataSession[res["id"]])
+        @self.__socketio.on("compute", namespace = "/pyvuejsSocket")
+        def onCompute(res):
+            model = self.__appSession[res["id"]][res["name"]].models[res["model"]]
 
-                                    update_data = {
-                                        vName: var
-                                        for vName, var in model.variables.items()
-                                    }
-                                    update_data["session"] = self.__dataSession[res["id"]]
+            for varName, value in res["variables"].items():
+                exec("model.{} = value".format(varName))
 
-                                    await self.__send_ws(
-                                        {
-                                            "job": "update",
-                                            "state": "success",
-                                            "direction": "view",
-                                            "id": res["id"],
-                                            "view": res["view"],
-                                            "model": model.name,
-                                            "vars": update_data
-                                        }
-                                    )
-                else:
-                    print(res)
+            model.computes[res["method"]](self.__dataSession[res["id"]])
+            
+            emit("update", {
+                "id": res["id"],
+                "name": res["name"],
+                "model": model.name,
+                "variables": model.variables,
+                "session": self.__dataSession[res["id"]]
+            })
+
+        @self.__socketio.on("method", namespace = "/pyvuejsSocket")
+        def onMethod(res):
+            model = self.__appSession[res["id"]][res["name"]].models[res["model"]]
+
+            for varName, value in res["variables"].items():
+                exec("model.{} = value".format(varName))
+
+            model.methods[res["method"]](self.__dataSession[res["id"]])
+            
+            emit("update", {
+                "id": res["id"],
+                "name": res["name"],
+                "model": model.name,
+                "variables": model.variables,
+                "session": self.__dataSession[res["id"]]
+            })
+
+        @self.__app.route("/session/upload", methods = ["POST"])
+        def onSessionUpload():
+            res = json.loads(request.data)
+
+            self.__dataSession[res["id"]] = res["session"]
+            self.__dataSessionExcludes["id"] = res["id"]
+            self.__dataSessionExcludes["name"] = res["name"]
+
+            return ""
+
+        @self.__app.route("/session/download", methods = ["POST"])
+        def onSessionDownload():
+            resp = {
+                "id": self.__dataSessionExcludes["id"],
+                "excludeName": self.__dataSessionExcludes["name"],
+                "sessions": {}
+            }
+            for viewId, session in self.__dataSession.items():
+                sessionSet = {}
+                for view in self.__appSession[viewId].values():
+                    sessionSet[view.name] = {}
+                    for modelName in view.models.keys():
+                        sessionSet[view.name][modelName] = session
+
+                resp["sessions"][viewId] = sessionSet
+
+            return jsonify(resp)
 
         self.__init_appDir(appDir)
 
@@ -105,7 +131,7 @@ class Server():
         import os, sys
         from glob import glob
         from importlib import import_module
-        from quart import Blueprint
+        from flask import Blueprint
         from .models import View
 
         appDirPath = os.path.abspath(appDirPath)
@@ -235,28 +261,28 @@ class Server():
         elif name in self.__components.keys():
             return "component"
 
-    async def __send_ws(self, sendInfo:dict):
-        import json
+    # async def __send_ws(self, sendInfo:dict):
+    #     import json
 
-        try:
-            await self.__websocket.send(json.dumps(sendInfo))
-        except:
-            print(sendInfo)
+    #     try:
+    #         await self.__websocket.send(json.dumps(sendInfo))
+    #     except:
+    #         print(sendInfo)
 
-    async def __get_ws(self) -> dict:
-        import json
+    # async def __get_ws(self) -> dict:
+    #     import asyncio, json
 
-        try:
-            res:dict = json.loads(await self.__websocket.receive())
-            if not "state" in res.keys():
-                res["state"] = "success"
-        except json.decoder.JSONDecodeError:
-            res = {
-                "job": "error",
-                "state": "failed"
-            }
+    #     try:
+    #         res:dict = json.loads(await self.__websocket.receive())
+    #         if not "state" in res.keys():
+    #             res["state"] = "success"
+    #     except json.decoder.JSONDecodeError:
+    #         res = {
+    #             "job": "error",
+    #             "state": "failed"
+    #         }
 
-        return res
+    #     return res
 
     def __create_viewFunc(self, fName, view):
         return """
@@ -268,7 +294,7 @@ def {0}():
 
     def start(self, host:str = "0.0.0.0", port:int = 8000):
         import os
-        from quart import request
+        from flask import request
         from copy import deepcopy
 
         @self.__app.route("/views/<viewName>")
@@ -327,4 +353,7 @@ def {0}():
             else:
                 return ""
 
-        self.__app.run(host = "0.0.0.0", port = port)
+        try:
+            self.__socketio.run(self.__app, host = "0.0.0.0", port = port)
+        except KeyboardInterrupt:
+            pass

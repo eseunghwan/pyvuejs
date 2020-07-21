@@ -257,3 +257,10 @@ pyvuejs is MIT license
 - V 0.2.2.Rev7 [2020/07/20]
     - change pyvuejs object to class with constructor
     - bug fixed
+        - pyvuejs calls other view's models also
+
+- V 0.3.0 [2020/07/21]
+    - change backend server to flask from quart
+    - changes in <b>requirements.txt</b>
+    - bug fixed
+        - session datas are not sync from view to model

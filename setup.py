@@ -27,6 +27,7 @@ setup(
             "*.ico",
             "*.css",
             "*.js",
+            "*.js.map",
             "*.html",
             "*.zip"
         ]
