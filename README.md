@@ -151,7 +151,7 @@ pvue file is a single view file against with vue file
         <button>click me!</button>
 
         <!-- if show components -->
-        <component name="[componentName]" />
+        <pvue-component endpoint="[componentName]"></pvue-component>
     </div>
 </template>
 ```
@@ -349,3 +349,11 @@ pyvuejs is MIT license
 - V 0.3.2.Rev2 [2020/07/22]
     - bug fixed
         - multiple session datas upload correctly
+
+- V 0.3.3 [2020/07/22]
+    - bug fixed
+        - model's native functions got erros during interpreting
+    - add <b>pyvue-component</b> tag and change <b>component</b> to <b>pyvue-component</b>
+        - format change to normal html format, "<pyvue-component endpoint=\"componentName\"></pyvue-component>"
+    - <b>webview</b> attribute changed to <b>appView</b>
+    - creating a new WebView window is available from model

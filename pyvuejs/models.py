@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+from copy import deepcopy
+import types
+from PySide2.QtWebEngineWidgets import QWebEngineView
+from PySide2.QtCore import QUrl
+
+from .logger import Logger
+from .static import baseView
 
 class Binder():
     def __init__(self):
@@ -56,37 +63,89 @@ class Binder():
 
         return decorator
 
+class WebView(QWebEngineView):
+    def __init__(self, url:str, title:str, geometry:tuple, parent = None, logging:bool = True):
+        super().__init__(parent)
+
+        self.logging = logging
+        self.loadFinished.connect(self.load_finished)
+
+        self.setWindowTitle(title)
+
+        if geometry[0] == -1 or geometry[1] == -1:
+            self.resize(geometry[2], geometry[3])
+        elif geometry[2] == -1 or geometry[3] == -1:
+            self.move(geometry[0], geometry[1])
+        else:
+            self.setGeometry(
+                geometry[0], geometry[1],
+                geometry[2], geometry[3]
+            )
+
+        self.load(QUrl(url))
+
+    def load_finished(self, ev):
+        if not self.parent() == None:
+            self.parent().hide()
+
+        self.show()
+
+        if self.logging:
+            Logger.info("Webview is loaded")
+
+    def closeEvent(self, ev):
+        if not self.parent() == None:
+            self.parent().show()
+
+        if self.logging:
+            Logger.info("Webview closed")
+
 class Model():
     binder = Binder()
     method = binder.method
     compute = binder.compute
     event = binder.event
+    WebView = WebView
 
-    def __init__(self, webview = None):
-        from copy import deepcopy
+    def __init__(self, appView:WebView = None):
+        self.__appView = appView
 
-        self.__webview = webview
-
-        excludeList = ["binder", "session", "method", "compute", "event", "name", "webview", "variables", "sessions", "computes", "methods", "events"]
-        self.__mayVariables = [mname for mname in dir(self) if not mname in excludeList and not mname.startswith("__") and not mname.startswith("_Model__")]
+        excludeTypes = (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType)
+        excludeList = ["binder", "session", "method", "compute", "event", "name", "WebView", "appView", "variables", "sessions", "computes", "methods", "events"]
+        self.__mayVariables = [
+            mname
+            for mname in dir(self)
+            if not mname in excludeList and\
+                not mname.startswith("__") and\
+                not mname.startswith("_Model__")
+        ]
         self.__sessions = {}
+
+        excludeVars = []
         for varName in self.__mayVariables:
-            if varName.startswith("session_"):
-                varNameVisible = varName[8:]
-                exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
+            var = eval("self.{}".format(varName))
+            if isinstance(var, excludeTypes):
+                excludeVars.append(varName)
+            else:
+                if varName.startswith("session_"):
+                    varNameVisible = varName[8:]
+                    exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
 
-                # self.__mayVariables.remove(varName)
-                # self.__mayVariables.append(varNameVisible)
+                    self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
 
-                self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
+        self.__mayVariables = [
+            varName
+            for varName in self.__mayVariables
+            if not varName in excludeVars
+        ]
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
 
     @property
-    def webview(self):
-        return self.__webview
+    def appView(self):
+        return self.__appView
 
     @property
     def variables(self) -> dict:
@@ -126,9 +185,7 @@ class Model():
         return eventInfo
 
 class View():
-    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict, webview = None):
-        from .static import baseView
-
+    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict, appView:WebView = None):
         self.__name = name
         self.__prefix = prefix
 
@@ -158,7 +215,7 @@ class View():
         self.__models = {}
         for modelName, modelText in modelTextInfo.items():
             exec(modelText)
-            self.__models[modelName] = eval(modelName)(webview)
+            self.__models[modelName] = eval(modelName)(appView)
 
     @property
     def name(self) -> str:

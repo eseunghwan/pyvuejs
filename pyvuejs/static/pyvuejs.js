@@ -1,4 +1,20 @@
 
+class PvueComponent extends HTMLElement {
+	constructor() {
+    	super();
+    }
+
+    connectedCallback() {
+        var viewer = document.createElement("object");
+        viewer.setAttribute("type", "text/html");
+        viewer.setAttribute("data", `/components/${this.getAttribute("endpoint")}`);
+        
+        this.appendChild(viewer);
+    }
+};
+
+customElements.define("pvue-component", PvueComponent);
+
 class pyvuejs {
     constructor(id, name, prefix, models) {
         this.__vms = {};

@@ -11,11 +11,12 @@ from flask import Flask, Blueprint, redirect, request, jsonify
 from flask_socketio import SocketIO, emit
 
 from . import __path__
-from .models import View
+from .models import View, WebView
 from .logger import Logger
+from .interpreting import interprete_appDir
 
 class Server():
-    def __init__(self, appDir:str, enableLogging:bool = True, webview = None):
+    def __init__(self, appDir:str, enableLogging:bool = True, webview:WebView = None):
         # check logging
         self.__logging = enableLogging
 
@@ -66,8 +67,10 @@ class Server():
                     try:
                         self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["views"][viewName])
                     except TypeError as err:
-                        if err.args[0] == "can't pickle PySide2.QtWebEngineWidgets.QWebEngineView objects":
+                        if err.args[0] == "can't pickle WebView objects":
                             self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
+                        else:
+                            print(err.args)
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():
@@ -105,8 +108,10 @@ class Server():
                     try:
                         self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["components"][viewName])
                     except TypeError as err:
-                        if err.args[0] == "can't pickle PySide2.QtWebEngineWidgets.QWebEngineView objects":
+                        if err.args[0] == "can't pickle WebView objects":
                             self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
+                        else:
+                            print(err.args)
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():
@@ -252,151 +257,9 @@ class Server():
         if self.__logging:
             Logger.info("Routing points are ready!\n")
 
-        self.__interpret_appDir()
+        interprete_appDir(self.__appDir, self.__app, self.__session["app"], webview, self.__logging)
         if self.__logging:
             Logger.info("Server is ready!\n")
-
-    def __interpret_appDir(self):
-        if self.__logging:
-            Logger.info("Interpreting app...")
-
-        if os.path.exists(self.__appDir):
-            sys.path.append(self.__appDir)
-
-            if self.__logging:
-                Logger.info("Interpreting view files...")
-
-            for pvPath in glob(os.path.join(self.__appDir, "views", "*.pvue")):
-                pvInfo = self.__interpret_pyvue(pvPath)
-                
-                view:View = View(
-                    pvInfo["name"], pvInfo["prefix"],
-                    pvInfo["resource"], pvInfo["style"], pvInfo["script"],
-                    pvInfo["template"],
-                    pvInfo["model"],
-                    self.__webview
-                )
-
-                if pvInfo["prefix"] == "view":
-                    self.__session["app"]["views"][pvInfo["name"]] = view
-                elif pvInfo["prefix"] == "component":
-                    self.__session["app"]["components"][pvInfo["name"]] = view
-
-                if self.__logging:
-                    Logger.info("{}.pvue has been interpreted".format(pvInfo["name"]))
-
-            if self.__logging:
-                Logger.info("Finished!\n")
-
-            if self.__logging:
-                Logger.info("Linking static files to server...")
-            staticDir = os.path.join(self.__appDir, "static")
-            if os.path.exists(staticDir):
-                self.__app.register_blueprint(
-                    Blueprint(
-                        os.path.basename(self.__appDir), "pyvue",
-                        static_url_path = "/app",
-                        static_folder = staticDir
-                    )
-                )
-            if self.__logging:
-                Logger.info("Finished!\n")
-        
-        if self.__logging:
-            Logger.info("App has been ready!\n")
-
-    def __interpret_pyvue(self, pvFile) -> dict:
-        import os
-
-        with open(pvFile, "r", encoding = "utf-8") as pvr:
-            pvt = pvr.read()
-
-            prefixLine = pvt.split("\n")[0]
-            if prefixLine.startswith("!prefix"):
-                prefix = prefixLine[8:]
-            else:
-                prefix = "view"
-
-            pvInfo = {
-                "resource": "",
-                "style": "",
-                "template": "",
-                "script": "",
-                "model": {}
-            }
-            for key in pvInfo.keys():
-                try:
-                    block = pvt.split("<{}>".format(key))[1].split("</{}>".format(key))[0]
-                except IndexError:
-                    block = ""
-
-                if not block == "":
-                    lines = block.split("\n")[1:-1]
-                    if len(lines) > 0:
-                        stripLength = len(lines[0][:-1 * len(lines[0].strip())])
-
-                        blockStripLines = [
-                            line[stripLength:]
-                            for line in lines
-                        ]
-
-                        if key == "template":
-                            if prefix == "view":
-                                for idx in range(len(blockStripLines)):
-                                    line = blockStripLines[idx]
-                                    if line.strip().startswith("<component ") and "name" in line:
-                                        componentName = line[11:-2].split("=")[1].strip()[1:-1]
-                                        tabSpace = line.replace(line.strip(), "")
-
-                                        blockStripLines[idx] = tabSpace + '<object type="text/html" data="/components/{}" style="overflow:hidden;width:100%;height:100%;"></object>'.format(componentName)
-
-                            pvInfo[key] = "\n".join(blockStripLines)
-                        elif key == "model":
-                            lineNums = []
-                            for idx in range(len(blockStripLines)):
-                                line = blockStripLines[idx]
-                                if line.startswith("Model ") and line.endswith(":"):
-                                    lineNums.append(idx)
-                                    blockStripLines[idx] = "class {}(Model):".format(line[6:-1])
-                                elif line.strip().startswith("def ") and line.endswith(":"):
-                                    blockStripLines[idx] = line.split("(self")[0] + "(self, session):"
-
-
-                            for idx in range(len(lineNums)):
-                                startNum = lineNums[idx]
-                                if idx < len(lineNums) - 1:
-                                    endNum = lineNums[idx + 1]
-                                else:
-                                    endNum = len(blockStripLines)
-
-                                modelLines = blockStripLines[startNum:endNum]
-                                if modelLines[-1] == "":
-                                    modelLines.pop(-1)
-
-                                for mlIdx in range(1, len(modelLines)):
-                                    line = modelLines[mlIdx]
-                                    if ":session" in line:
-                                        varName = line.split(":session")[0].strip()
-                                        modelLines[mlIdx] = line.replace(
-                                            varName + ":session",
-                                            "session_" + varName
-                                        )
-
-                                insertSpace = modelLines[1].replace(modelLines[1].strip(), "")
-                                modelLines.insert(1, insertSpace + "binder = Binder()")
-                                modelLines.insert(2, insertSpace + "method = binder.method")
-                                modelLines.insert(3, insertSpace + "compute = binder.compute")
-                                modelLines.insert(4, insertSpace + "event = binder.event")
-                                modelLines.insert(5, "")
-
-                                pvInfo[key][modelLines[0][6:-8]] = "\n".join(modelLines)
-                        else:
-                            pvInfo[key] = "\n".join(blockStripLines)
-
-            pvInfo["name"] = os.path.splitext(os.path.basename(pvFile))[0]
-            pvInfo["prefix"] = prefix
-
-            return pvInfo
 
     def __get_view_type(self, name:str) -> str:
         if name in self.__session["app"]["views"].keys():
@@ -418,7 +281,10 @@ def {0}():
                 host = "0.0.0.0"
 
             if self.__logging:
-                Logger.info("Server started on \"http://{}:{}\"".format(host, port))
+                Logger.info("Server started on \"http://{}:{}\"".format(
+                    "127.0.0.1" if host == "0.0.0.0" else host,
+                    port
+                ))
                 Logger.info("Please check Devtool to show data transfers")
             self.__socketio.run(self.__app, host = host, port = port)
         except KeyboardInterrupt:
@@ -427,41 +293,21 @@ def {0}():
 class WindowedServer():
     def __init__(self, enableLogging:bool = True):
         from PySide2.QtWidgets import QApplication
-        from PySide2.QtWebEngineWidgets import QWebEngineView
 
         self.__logging = enableLogging
-
         self.__qtApp = QApplication(sys.argv)
-        self.__window = QWebEngineView()
-        self.__window.loadFinished.connect(self.__onLoaded)
-        self.__window.closeEvent = self.__onClosed
 
-    def __onLoaded(self, finished:bool):
-        self.__window.showNormal()
-
-        if self.__logging:
-            Logger.info("Webview is loaded")
-
-    def __onClosed(self, ev):
+    def __appview_closed(self, ev):
         if self.__logging:
             Logger.info("Shutting down background server...")
 
         subprocess.Popen([sys.executable, ".\manage.py", "stop"])
 
     def __start_server_background(self, appDir:str, port:int):
-        Server(appDir, False, self.__window).start("127.0.0.1", port)
+        Server(appDir, False, self.__appView).start("127.0.0.1", port)
 
     def start(self, appDir:str, port:int = 8080, window_size:list = [900, 600]):
         from PySide2.QtGui import QIcon
-        from PySide2.QtCore import QUrl, QThread
-
-        if self.__logging:
-            Logger.info("Start server on background...")
-
-        os.chdir(appDir)
-        self.__timer = Timer(1, self.__start_server_background, (appDir, port))
-        self.__timer.start()
-        # subprocess.Popen([sys.executable, ".\manage.py", "run", "--host={}".format(host), "--port={}".format(port), "--logging=disable", "--mode=server"])
 
         if self.__logging:
             Logger.info("Setting up webview...")
@@ -471,9 +317,19 @@ class WindowedServer():
             appIcon = os.path.join(__path__[0], "static", "favicon.png")
 
         self.__qtApp.setWindowIcon(QIcon(appIcon))
+        self.__appView = WebView(
+            "http://127.0.0.1:{}/views/def@ltWindowed".format(port),
+            os.path.basename(appDir),
+            (-1, -1, window_size[0], window_size[1]),
+            logging = self.__logging
+        )
+        self.__appView.closeEvent = self.__appview_closed
 
-        self.__window.setWindowTitle(os.path.basename(appDir))
-        self.__window.load(QUrl("http://127.0.0.1:{}/views/def@ltWindowed".format(port)))
-        self.__window.resize(window_size[0], window_size[1])
+        if self.__logging:
+            Logger.info("Start server on background...")
+
+        os.chdir(appDir)
+        self.__timer = Timer(1, self.__start_server_background, (appDir, port))
+        self.__timer.start()
 
         sys.exit(self.__qtApp.exec_())
