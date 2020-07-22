@@ -345,3 +345,7 @@ pyvuejs is MIT license
 
 - V 0.3.2.Rev1 [2020/07/22]
     - webview window can be invoked from model with name <b>webview</b>
+
+- V 0.3.2.Rev2 [2020/07/22]
+    - bug fixed
+        - multiple session datas upload correctly

@@ -5,7 +5,7 @@ from threading import Timer
 from collections import OrderedDict
 from datetime import datetime
 from glob import glob
-from copy import copy
+from copy import copy, deepcopy
 import subprocess
 from flask import Flask, Blueprint, redirect, request, jsonify
 from flask_socketio import SocketIO, emit
@@ -63,7 +63,11 @@ class Server():
                     self.__session["app"]["mpa"][viewId] = OrderedDict()
 
                 if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
+                    try:
+                        self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["views"][viewName])
+                    except TypeError as err:
+                        if err.args[0] == "can't pickle PySide2.QtWebEngineWidgets.QWebEngineView objects":
+                            self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():
@@ -98,7 +102,11 @@ class Server():
                     self.__session["app"]["mpa"][viewId] = OrderedDict()
 
                 if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
+                    try:
+                        self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["components"][viewName])
+                    except TypeError as err:
+                        if err.args[0] == "can't pickle PySide2.QtWebEngineWidgets.QWebEngineView objects":
+                            self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():

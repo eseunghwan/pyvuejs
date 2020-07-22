@@ -72,9 +72,12 @@ def main(args):
             con = sqlite3.connect(stateFile, check_same_thread = False)
             cursor = con.cursor()
 
-            requests.post("http://127.0.0.1:{}/shutdown".format(
-                cursor.execute("select `port` from `state`;").fetchone()[0]
-            ))
+            try:
+                requests.post("http://127.0.0.1:{}/shutdown".format(
+                    cursor.execute("select `port` from `state`;").fetchone()[0]
+                ))
+            except requests.exceptions.ConnectionError:
+                pass
             
             cursor.close()
             con.close()

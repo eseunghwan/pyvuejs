@@ -75,7 +75,7 @@ class Model():
                 varNameVisible = varName[8:]
                 exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
 
-                self.__mayVariables.remove(varName)
+                # self.__mayVariables.remove(varName)
                 # self.__mayVariables.append(varNameVisible)
 
                 self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
