@@ -62,10 +62,12 @@ class Model():
     compute = binder.compute
     event = binder.event
 
-    def __init__(self):
+    def __init__(self, webview = None):
         from copy import deepcopy
 
-        excludeList = ["binder", "session", "method", "compute", "event", "name", "variables", "sessions", "computes", "methods", "events"]
+        self.__webview = webview
+
+        excludeList = ["binder", "session", "method", "compute", "event", "name", "webview", "variables", "sessions", "computes", "methods", "events"]
         self.__mayVariables = [mname for mname in dir(self) if not mname in excludeList and not mname.startswith("__") and not mname.startswith("_Model__")]
         self.__sessions = {}
         for varName in self.__mayVariables:
@@ -74,13 +76,17 @@ class Model():
                 exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
 
                 self.__mayVariables.remove(varName)
-                self.__mayVariables.append(varNameVisible)
+                # self.__mayVariables.append(varNameVisible)
 
                 self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
 
     @property
     def name(self) -> str:
         return self.__class__.__name__
+
+    @property
+    def webview(self):
+        return self.__webview
 
     @property
     def variables(self) -> dict:
@@ -120,7 +126,7 @@ class Model():
         return eventInfo
 
 class View():
-    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict):
+    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict, webview = None):
         from .static import baseView
 
         self.__name = name
@@ -152,7 +158,7 @@ class View():
         self.__models = {}
         for modelName, modelText in modelTextInfo.items():
             exec(modelText)
-            self.__models[modelName] = eval(modelName + "()")
+            self.__models[modelName] = eval(modelName)(webview)
 
     @property
     def name(self) -> str:

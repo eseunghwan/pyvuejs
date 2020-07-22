@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 # import modules
 import os, sys, json
+from threading import Timer
 from collections import OrderedDict
 from datetime import datetime
 from glob import glob
-from copy import deepcopy
+from copy import copy
 import subprocess
 from flask import Flask, Blueprint, redirect, request, jsonify
 from flask_socketio import SocketIO, emit
@@ -14,7 +15,7 @@ from .models import View
 from .logger import Logger
 
 class Server():
-    def __init__(self, appDir:str, enableLogging:bool = True):
+    def __init__(self, appDir:str, enableLogging:bool = True, webview = None):
         # check logging
         self.__logging = enableLogging
 
@@ -22,6 +23,7 @@ class Server():
         if self.__logging:
             Logger.info("Prepare Server to run app...")
 
+        self.__webview = webview
         self.__appDir = os.path.abspath(appDir)
         self.__session = {
             "app": {
@@ -61,7 +63,7 @@ class Server():
                     self.__session["app"]["mpa"][viewId] = OrderedDict()
 
                 if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["views"][viewName])
+                    self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():
@@ -96,7 +98,7 @@ class Server():
                     self.__session["app"]["mpa"][viewId] = OrderedDict()
 
                 if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["components"][viewName])
+                    self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
 
                     for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
                         for varName, var in model.sessions.items():
@@ -263,7 +265,8 @@ class Server():
                     pvInfo["name"], pvInfo["prefix"],
                     pvInfo["resource"], pvInfo["style"], pvInfo["script"],
                     pvInfo["template"],
-                    pvInfo["model"]
+                    pvInfo["model"],
+                    self.__webview
                 )
 
                 if pvInfo["prefix"] == "view":
@@ -407,7 +410,7 @@ def {0}():
                 host = "0.0.0.0"
 
             if self.__logging:
-                Logger.info("Server started on \"{}:{}\"".format(host, port))
+                Logger.info("Server started on \"http://{}:{}\"".format(host, port))
                 Logger.info("Please check Devtool to show data transfers")
             self.__socketio.run(self.__app, host = host, port = port)
         except KeyboardInterrupt:
@@ -419,6 +422,7 @@ class WindowedServer():
         from PySide2.QtWebEngineWidgets import QWebEngineView
 
         self.__logging = enableLogging
+
         self.__qtApp = QApplication(sys.argv)
         self.__window = QWebEngineView()
         self.__window.loadFinished.connect(self.__onLoaded)
@@ -436,15 +440,20 @@ class WindowedServer():
 
         subprocess.Popen([sys.executable, ".\manage.py", "stop"])
 
-    def start(self, appDir:str, host:str = "0.0.0.0", port:int = 8080, window_size:list = [900, 600]):
+    def __start_server_background(self, appDir:str, port:int):
+        Server(appDir, False, self.__window).start("127.0.0.1", port)
+
+    def start(self, appDir:str, port:int = 8080, window_size:list = [900, 600]):
         from PySide2.QtGui import QIcon
-        from PySide2.QtCore import QUrl
+        from PySide2.QtCore import QUrl, QThread
 
         if self.__logging:
             Logger.info("Start server on background...")
 
         os.chdir(appDir)
-        subprocess.Popen([sys.executable, ".\manage.py", "run", "--host={}".format(host), "--port={}".format(port), "--logging=disable", "--mode=server"])
+        self.__timer = Timer(1, self.__start_server_background, (appDir, port))
+        self.__timer.start()
+        # subprocess.Popen([sys.executable, ".\manage.py", "run", "--host={}".format(host), "--port={}".format(port), "--logging=disable", "--mode=server"])
 
         if self.__logging:
             Logger.info("Setting up webview...")

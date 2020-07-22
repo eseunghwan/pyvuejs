@@ -342,3 +342,6 @@ pyvuejs is MIT license
     - "logging" option added
         - if <b>enable</b>, server log to console
         - if not, server doesn't log to console
+
+- V 0.3.2.Rev1 [2020/07/22]
+    - webview window can be invoked from model with name <b>webview</b>

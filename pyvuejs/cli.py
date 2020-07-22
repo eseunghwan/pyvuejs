@@ -61,7 +61,7 @@ def main(args):
                     window_size = [900, 600]
 
                 from .server import WindowedServer
-                WindowedServer(args["logging"] == "enable").start(os.getcwd(), args["host"], int(args["port"]), window_size)
+                WindowedServer(args["logging"] == "enable").start(os.getcwd(), int(args["port"]), window_size)
             else:
                 raise RuntimeError("Unknown mode {}, available modes are \"server\", \"standalone\"".format(args["mode"]))
         else:
