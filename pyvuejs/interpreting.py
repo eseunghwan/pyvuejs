@@ -48,7 +48,7 @@ def interprete_pyvue(pvueFile) -> dict:
                             elif line.strip().startswith("def ") and line.endswith(":"):
                                 mayDecoratorLine = blockStripLines[idx - 1].strip()
                                 if mayDecoratorLine.startswith("@"):
-                                    decoratorText = mayDecoratorLine.split("(")[0]
+                                    decoratorText = mayDecoratorLine.split("(")[0][1:]
                                     if decoratorText in ("method", "compute", "event"):
                                         blockStripLines[idx] = line.split("(self")[0] + "(self, session):"
 

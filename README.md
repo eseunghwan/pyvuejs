@@ -357,3 +357,7 @@ pyvuejs is MIT license
         - format change to normal html format, "<pyvue-component endpoint=\"componentName\"></pyvue-component>"
     - <b>webview</b> attribute changed to <b>appView</b>
     - creating a new WebView window is available from model
+
+- V 0.3.3.Rev1 [2020/07/22]
+    - bug fixed
+        - decorator text was miss-parsed
