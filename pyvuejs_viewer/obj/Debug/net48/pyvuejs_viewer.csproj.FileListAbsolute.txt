@@ -1,0 +1,9 @@
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\build\net48\pyvuejs_viewer.exe.config
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\build\net48\pyvuejs_viewer.exe
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\build\net48\pyvuejs_viewer.pdb
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.csprojAssemblyReference.cache
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.AssemblyInfoInputs.cache
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.AssemblyInfo.cs
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.csproj.CoreCompileInputs.cache
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.exe
+W:\00_ongoing\SHLEE\pyvuejs\pyvuejs_viewer\obj\Debug\net48\pyvuejs_viewer.pdb

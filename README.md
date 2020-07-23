@@ -361,3 +361,7 @@ pyvuejs is MIT license
 - V 0.3.3.Rev1 [2020/07/22]
     - bug fixed
         - decorator text was miss-parsed
+
+- V 0.3.4 [2020/07/22]
+    - change UI module from PySide2 to pycefsharp
+        - appView can be invoked, too

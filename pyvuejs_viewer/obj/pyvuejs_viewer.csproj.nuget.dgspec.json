@@ -1,0 +1,56 @@
+{
+  "format": 1,
+  "restore": {
+    "W:\\00_ongoing\\SHLEE\\pyvuejs\\pyvuejs_viewer\\pyvuejs_viewer.csproj": {}
+  },
+  "projects": {
+    "W:\\00_ongoing\\SHLEE\\pyvuejs\\pyvuejs_viewer\\pyvuejs_viewer.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "W:\\00_ongoing\\SHLEE\\pyvuejs\\pyvuejs_viewer\\pyvuejs_viewer.csproj",
+        "projectName": "pyvuejs_viewer",
+        "projectPath": "W:\\00_ongoing\\SHLEE\\pyvuejs\\pyvuejs_viewer\\pyvuejs_viewer.csproj",
+        "packagesPath": "L:\\nuget\\packages",
+        "outputPath": "W:\\00_ongoing\\SHLEE\\pyvuejs\\pyvuejs_viewer\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\eseunghwan_sub\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net48"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net48": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net48": {
+          "dependencies": {
+            "CefSharp.WinForms": {
+              "target": "Package",
+              "version": "[83.4.20, )"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.301\\RuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

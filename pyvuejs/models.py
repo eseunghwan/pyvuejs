@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from copy import deepcopy
 import types
-from PySide2.QtWebEngineWidgets import QWebEngineView
-from PySide2.QtCore import QUrl
 
 from .logger import Logger
+from .webview import WebView
 from .static import baseView
 
 class Binder():
@@ -63,42 +62,42 @@ class Binder():
 
         return decorator
 
-class WebView(QWebEngineView):
-    def __init__(self, url:str, title:str, geometry:tuple, parent = None, logging:bool = True):
-        super().__init__(parent)
+# class WebView(QWebEngineView):
+#     def __init__(self, url:str, title:str, geometry:tuple, parent = None, logging:bool = True):
+#         super().__init__(parent)
 
-        self.logging = logging
-        self.loadFinished.connect(self.load_finished)
+#         self.logging = logging
+#         self.loadFinished.connect(self.load_finished)
 
-        self.setWindowTitle(title)
+#         self.setWindowTitle(title)
 
-        if geometry[0] == -1 or geometry[1] == -1:
-            self.resize(geometry[2], geometry[3])
-        elif geometry[2] == -1 or geometry[3] == -1:
-            self.move(geometry[0], geometry[1])
-        else:
-            self.setGeometry(
-                geometry[0], geometry[1],
-                geometry[2], geometry[3]
-            )
+#         if geometry[0] == -1 or geometry[1] == -1:
+#             self.resize(geometry[2], geometry[3])
+#         elif geometry[2] == -1 or geometry[3] == -1:
+#             self.move(geometry[0], geometry[1])
+#         else:
+#             self.setGeometry(
+#                 geometry[0], geometry[1],
+#                 geometry[2], geometry[3]
+#             )
 
-        self.load(QUrl(url))
+#         self.load(QUrl(url))
 
-    def load_finished(self, ev):
-        if not self.parent() == None:
-            self.parent().hide()
+#     def load_finished(self, ev):
+#         if not self.parent() == None:
+#             self.parent().hide()
 
-        self.show()
+#         self.show()
 
-        if self.logging:
-            Logger.info("Webview is loaded")
+#         if self.logging:
+#             Logger.info("Webview is loaded")
 
-    def closeEvent(self, ev):
-        if not self.parent() == None:
-            self.parent().show()
+#     def closeEvent(self, ev):
+#         if not self.parent() == None:
+#             self.parent().show()
 
-        if self.logging:
-            Logger.info("Webview closed")
+#         if self.logging:
+#             Logger.info("Webview closed")
 
 class Model():
     binder = Binder()

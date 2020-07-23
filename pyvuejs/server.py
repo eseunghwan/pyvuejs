@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # import modules
-import os, sys, json
+import os, sys, json, signal
 from threading import Timer
 from collections import OrderedDict
 from datetime import datetime
@@ -11,8 +11,9 @@ from flask import Flask, Blueprint, redirect, request, jsonify
 from flask_socketio import SocketIO, emit
 
 from . import __path__
-from .models import View, WebView
 from .logger import Logger
+from .models import View
+from .webview import WebView
 from .interpreting import interprete_appDir
 
 class Server():
@@ -41,17 +42,24 @@ class Server():
                 "expiredTime": 1800
             }
         }
+
         self.__app = Flask(
             "pyvue",
             static_folder = os.path.join(__path__[0], "static"),
             template_folder = os.path.join(__path__[0], "static")
         )
+        self.__app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 1
         self.__app.secret_key = "pyvuejsApp"
         self.__socketio = SocketIO(self.__app)
 
         # view routing points
         if self.__logging:
             Logger.info("Setting view/component routing points...")
+
+        @self.__app.after_request
+        def add_header(response):
+            response.headers["Cache-Control"] = "no-store"
+            return response
 
         @self.__app.route("/views/<viewName>")
         def showView(viewName):
@@ -67,7 +75,7 @@ class Server():
                     try:
                         self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["views"][viewName])
                     except TypeError as err:
-                        if err.args[0] == "can't pickle WebView objects":
+                        if err.args[0].startswith("can't pickle"):
                             self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
                         else:
                             print(err.args)
@@ -108,7 +116,7 @@ class Server():
                     try:
                         self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["components"][viewName])
                     except TypeError as err:
-                        if err.args[0] == "can't pickle WebView objects":
+                        if err.args[0].startswith("can't pickle"):
                             self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
                         else:
                             print(err.args)
@@ -292,38 +300,42 @@ def {0}():
 
 class WindowedServer():
     def __init__(self, enableLogging:bool = True):
-        from PySide2.QtWidgets import QApplication
-
         self.__logging = enableLogging
-        self.__qtApp = QApplication(sys.argv)
 
-    def __appview_closed(self, ev):
+    def __appview_show(self):
+        if self.__logging:
+            Logger.info("Webview is ready!")
+
+    def __appview_closed(self):
         if self.__logging:
             Logger.info("Shutting down background server...")
 
         subprocess.Popen([sys.executable, ".\manage.py", "stop"])
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def __start_server_background(self, appDir:str, port:int):
         Server(appDir, False, self.__appView).start("127.0.0.1", port)
 
     def start(self, appDir:str, port:int = 8080, window_size:list = [900, 600]):
-        from PySide2.QtGui import QIcon
+        from pycefsharp.cef import CefApp
 
         if self.__logging:
             Logger.info("Setting up webview...")
 
-        appIcon = os.path.join(appDir, "static", "favicon.png")
+        appIcon = os.path.join(appDir, "static", "favicon.ico")
         if not os.path.exists(appIcon):
-            appIcon = os.path.join(__path__[0], "static", "favicon.png")
+            appIcon = os.path.join(__path__[0], "static", "favicon.ico")
 
-        self.__qtApp.setWindowIcon(QIcon(appIcon))
+        # self.__qtApp.setWindowIcon(QIcon(appIcon))
         self.__appView = WebView(
             "http://127.0.0.1:{}/views/def@ltWindowed".format(port),
             os.path.basename(appDir),
-            (-1, -1, window_size[0], window_size[1]),
-            logging = self.__logging
+            appIcon,
+            (-1, -1, window_size[0], window_size[1])
         )
-        self.__appView.closeEvent = self.__appview_closed
+        self.__appView._cef_form.IsMdiContainer = True
+        self.__appView.on_show = self.__appview_show
+        self.__appView.on_close = self.__appview_closed
 
         if self.__logging:
             Logger.info("Start server on background...")
@@ -332,4 +344,4 @@ class WindowedServer():
         self.__timer = Timer(1, self.__start_server_background, (appDir, port))
         self.__timer.start()
 
-        sys.exit(self.__qtApp.exec_())
+        CefApp().Run(self.__appView)
