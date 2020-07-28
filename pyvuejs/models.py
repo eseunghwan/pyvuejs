@@ -1,232 +1,90 @@
 # -*- coding: utf-8 -*-
-from copy import deepcopy
 import types
-
-from .logger import Logger
-from .webview import WebView
-from .static import baseView
-
-class Binder():
-    def __init__(self):
-        self.__variables = []
-        self.__methods = []
-        self.__computes = []
-        self.__events = {}
-
-    @property
-    def variables(self) -> list:
-        return self.__variables
-
-    @property
-    def methods(self) -> list:
-        return self.__methods
-
-    @property
-    def computes(self) -> list:
-        return self.__computes
-
-    @property
-    def events(self) -> dict:
-        return self.__events
-
-    def variable(self, variable) -> bool:
-        if not variable in self.__variables:
-            self.__variables.append(variable)
-            return True
-        else:
-            return False
-
-    def method(self, func):
-        def decorator(func):
-            if not func.__name__ in self.__methods:
-                self.__methods.append(func.__name__)
-
-            return func
-
-        return decorator(func)
-
-    def compute(self, func):
-        def decorator(func):
-            if not func.__name__ in self.__computes:
-                self.__computes.append(func.__name__)
-
-            return func
-
-        return decorator(func)
-
-    def event(self, eventType:str):
-        def decorator(func):
-            self.__events[eventType] = func.__name__
-
-            return func
-
-        return decorator
-
-# class WebView(QWebEngineView):
-#     def __init__(self, url:str, title:str, geometry:tuple, parent = None, logging:bool = True):
-#         super().__init__(parent)
-
-#         self.logging = logging
-#         self.loadFinished.connect(self.load_finished)
-
-#         self.setWindowTitle(title)
-
-#         if geometry[0] == -1 or geometry[1] == -1:
-#             self.resize(geometry[2], geometry[3])
-#         elif geometry[2] == -1 or geometry[3] == -1:
-#             self.move(geometry[0], geometry[1])
-#         else:
-#             self.setGeometry(
-#                 geometry[0], geometry[1],
-#                 geometry[2], geometry[3]
-#             )
-
-#         self.load(QUrl(url))
-
-#     def load_finished(self, ev):
-#         if not self.parent() == None:
-#             self.parent().hide()
-
-#         self.show()
-
-#         if self.logging:
-#             Logger.info("Webview is loaded")
-
-#     def closeEvent(self, ev):
-#         if not self.parent() == None:
-#             self.parent().show()
-
-#         if self.logging:
-#             Logger.info("Webview closed")
+from inspect import signature
+from pycefsharp.cef import CefView
 
 class Model():
-    binder = Binder()
-    method = binder.method
-    compute = binder.compute
-    event = binder.event
-    WebView = WebView
+    __class_type__ = "model"
+    webview:CefView = None
 
-    def __init__(self, appView:WebView = None):
-        self.__appView = appView
-
-        excludeTypes = (types.FunctionType, types.MethodType, types.BuiltinFunctionType, types.BuiltinMethodType)
-        excludeList = ["binder", "session", "method", "compute", "event", "name", "WebView", "appView", "variables", "sessions", "computes", "methods", "events"]
-        self.__mayVariables = [
-            mname
-            for mname in dir(self)
-            if not mname in excludeList and\
-                not mname.startswith("__") and\
-                not mname.startswith("_Model__")
-        ]
-        self.__sessions = {}
-
-        excludeVars = []
-        for varName in self.__mayVariables:
-            var = eval("self.{}".format(varName))
-            if isinstance(var, excludeTypes):
-                excludeVars.append(varName)
-            else:
-                if varName.startswith("session_"):
-                    varNameVisible = varName[8:]
-                    exec("self.{0} = deepcopy(self.{1})".format(varNameVisible, varName))
-
-                    self.__sessions[varNameVisible] = eval("self.{}".format(varNameVisible))
-
-        self.__mayVariables = [
-            varName
-            for varName in self.__mayVariables
-            if not varName in excludeVars
-        ]
-
-    @property
-    def name(self) -> str:
-        return self.__class__.__name__
-
-    @property
-    def appView(self):
-        return self.__appView
+    def __init__(self):
+        self.__variables, self.__events, self.__methods, self.__sessions = {}, {}, {}, {}
+        for mname in dir(self):
+            if not mname.startswith("__") and not mname.startswith("_Model__"):
+                may_var = eval("self.{}".format(mname))
+                if "__bind_info__" in dir(may_var):
+                    bind_info = may_var.__bind_info__
+                    
+                    if bind_info["type"] == "variable":
+                        self.__variables[mname] = may_var.value
+                    elif bind_info["type"] == "session":
+                        self.__sessions[mname] = may_var.value
+                    elif bind_info["type"] == "method":
+                        self.__methods[mname] = may_var
+                    elif bind_info["type"] == "event":
+                        self.__events[bind_info["name"]] = may_var
 
     @property
     def variables(self) -> dict:
-        variableInfo = {}
-        for varName in self.__mayVariables:
-            if not varName in self.binder.computes and not varName in self.binder.methods and not varName in self.__sessions.keys() and not varName in self.binder.events.values():
-                variableInfo[varName] = eval("self.{}".format(varName))
-
-        return variableInfo
+        return self.__variables
 
     @property
     def sessions(self) -> dict:
         return self.__sessions
 
     @property
-    def computes(self) -> dict:
-        computeInfo = {}
-        for computeName in self.binder.computes:
-            computeInfo[computeName] = eval("self.{}".format(computeName))
-
-        return computeInfo
-
-    @property
     def methods(self) -> dict:
-        methodInfo = {}
-        for methodName in self.binder.methods:
-            methodInfo[methodName] = eval("self.{}".format(methodName))
-
-        return methodInfo
+        return self.__methods
 
     @property
     def events(self) -> dict:
-        eventInfo = {}
-        for eventType, eventName in self.binder.events.items():
-            eventInfo[eventType] = eval("self.{}".format(eventName))
+        return self.__events
 
-        return eventInfo
+    def call_event(self, event_name:str, session = None):
+        event = self.events[event_name]
+        event_params = signature(event).parameters
+        if "session" in event_params.keys():
+            event(session)
+        else:
+            event()
+
+    def call_method(self, method_name:str, session = None):
+        method = self.methods[method_name]
+        method_params = signature(method).parameters.keys()
+        if "session" in method_params or "session_data" in method_params:
+            method(session)
+        else:
+            method()
 
 class View():
-    def __init__(self, name:str, prefix:str, resourceText:str, styleText:str, scriptText:str, templateText:str, modelTextInfo:dict, appView:WebView = None):
-        self.__name = name
+    def __init__(self, prefix:str, view_name:str, template:str, resources:str, style:str):
         self.__prefix = prefix
-
-        self.__renderedText = baseView.replace(
-            "{$viewName}", self.__name
-        ).replace(
-            "{$viewModels}", "\", \"".join(list(modelTextInfo.keys()))
-        ).replace(
-            "{$viewResource}", resourceText
-        ).replace(
-            "{$viewStyle}", styleText
-        ).replace(
-            "{$viewScript}", scriptText
-        ).replace(
-            "{$viewBody}", templateText
-        )
-        # if self.__prefix == "view":
-        #     for line in self.__renderedText.split("\n"):
-        #         if line.strip().startswith("<component ") and "name" in line:
-        #             componentName = line[11:-1].split("=")[1][1:-1]
-
-        #             self.__renderedText = self.__renderedText.replace(
-        #                 line,
-        #                 '<div style="width:100%;height:100%;"><object type="text/html" data="/components/{}" style="overflow:hidden;width:100%;height:100%;"></object></div>'.format(componentName)
-        #             )
-
-        self.__models = {}
-        for modelName, modelText in modelTextInfo.items():
-            exec(modelText)
-            self.__models[modelName] = eval(modelName)(appView)
-
-    @property
-    def name(self) -> str:
-        return self.__name
+        self.__name = view_name
+        self.__template = template
+        self.__resources = resources
+        self.__style = style
 
     @property
     def prefix(self) -> str:
         return self.__prefix
 
     @property
-    def models(self) -> dict:
-        return self.__models
+    def name(self) -> str:
+        return self.__name
 
-    def render(self, viewId:str) -> str:
-        return self.__renderedText.replace("{$viewId}", viewId)
+    def render(self, view_id:str, models:list) -> str:
+        from .static import baseView
+
+        return baseView.replace(
+            "{$viewResource}", self.__resources
+        ).replace(
+            "{$viewStyle}", self.__style
+        ).replace(
+            "{$viewTemplate}", self.__template
+        ).replace(
+            "{$viewId}", view_id
+        ).replace(
+            "{$viewName}", self.name
+        ).replace(
+            "{$viewModels}", str(models)
+        )

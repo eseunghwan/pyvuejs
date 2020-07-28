@@ -1,7 +1,5 @@
-flask
-Flask-SocketIO
-gevent
-gevent-websocket
+quart
 requests
+json-logging
 pyinstaller
 pycefsharp

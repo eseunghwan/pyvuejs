@@ -27,67 +27,90 @@ python setup.py install
 # Usage
 ### create project with cli
 ```powershell
-python -m pyvuejs init --app=sampleApp
+python -m pyvuejs create-project --name=sample_project
 
 [console output]
-[pyvuejs | 2020-07-21T20:32:24Z] INFO: Creating pyvuejs application...
-[pyvuejs | 2020-07-21T20:32:24Z] INFO: Extracting template files...
-[pyvuejs | 2020-07-21T20:32:24Z] INFO: App "sampleApp" is ready!
+[pyvuejs | 2020-07-28T23:27:49Z] INFO: Creating pyvuejs project...
+[pyvuejs | 2020-07-28T23:27:49Z] INFO: Extracting template files...
+[pyvuejs | 2020-07-28T23:27:49Z] INFO: Project "sample_project" is ready!
 ```
 <br>
 
-### move to project directory and start with cli
+### manage apps with cli
+- <b>main</b> app cannot be removed
+```powershell
+<# create #>
+python .\manage.py create-app --name=sample_app
+
+[console output]
+[pyvuejs | 2020-07-28T23:28:23Z] INFO: Creating pyvuejs app...
+[pyvuejs | 2020-07-28T23:28:23Z] INFO: Extracting template files...
+[pyvuejs | 2020-07-28T23:28:23Z] INFO: App "sample_app" is ready!
+
+<# remove #>
+python .\manage.py remove-app --name=sample_app
+
+[console output]
+[pyvuejs | 2020-07-28T23:28:55Z] INFO: Removing app "sample_app"...
+[pyvuejs | 2020-07-28T23:28:55Z] INFO: App "sample_app" removed!
+```
+<br>
+
+### start project with cli
 - default host = "0.0.0.0", port = 8000
 - both <b>host</b> and <b>port</b> are positional arguments
 ```powershell
-python .\manage.py run --host=127.0.0.1 --port=8080
+python .\manage.py start --host=127.0.0.1 --port=8000
 
 [console output]
-[pyvuejs | 2020-07-21T20:54:09Z] INFO: Starting pyvuejs application...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Prepare Server to run app...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Setting function routing points...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Setting socket routing points...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Routing points are ready!
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Preparing server...
 
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Interpreting app...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Interpreting view files...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: hello.pvue has been interpreted
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Finished!
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting routing points...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting view/component points...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting function points...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
 
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Linking static files to server...
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Finished!
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting project "sample_project"...
 
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: App has been ready!
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting app "main"...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting pvue file...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting models...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Model mainApp loaded
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
 
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Server is ready!
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Linking static to server...
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
 
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Server started on "0.0.0.0:8080"
-[pyvuejs | 2020-07-21T20:54:10Z] INFO: Please check Devtool to show data transfers
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Project is ready!
+
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Server started on "http://127.0.0.1:8000/"
+[pyvuejs | 2020-07-28T23:31:45Z] INFO: Please check Devtool to show data transfers
+Running on http://0.0.0.0:8000 (CTRL + C to quit)
 
 [web console output]
-[pyvuejs | 2020-07-21T21:01:33Z] INFO: Model 127.0.0.1/main/App created
-[pyvuejs | 2020-07-21T21:01:33Z] INFO: View 127.0.0.1/main loaded
-[pyvuejs | 2020-07-21T21:01:33Z] INFO: Model 127.0.0.1/hello2/App created
-[pyvuejs | 2020-07-21T21:01:33Z] INFO: View 127.0.0.1/hello2 loaded
-[pyvuejs | 2020-07-21T21:01:42Z] INFO: Variables of 127.0.0.1/hello2/App updated
-[pyvuejs | 2020-07-21T21:01:43Z] INFO: Variables of 127.0.0.1/main/App updated
+[pyvuejs | 2020-07-28T23:32:40Z] INFO: Model 127.0.0.1/main/mainApp created
+[pyvuejs | 2020-07-28T23:32:40Z] INFO: View 127.0.0.1/main loaded
 ```
 <br>
 
-### start standalone mode
+### start project standalone mode
 - switch mode to <b>standalone</b>
-- size of window can be adjusted by <b>window-size</b> argument
 - host and port options are available
-- using <b>PySide2's WebEngineView</b>
+- using <b>pycefsharp</b>
 ```powershell
-python .\manage.py run --host=127.0.0.1 --port=8080 --mode=standalone --window-size=900,600
+python .\manage.py start --host=127.0.0.1 --port=8000 --mode=standalone
 
 [console output]
-[pyvuejs | 2020-07-22T00:13:01Z] INFO: Start server on background...
-[pyvuejs | 2020-07-22T00:13:01Z] INFO: Setting up webview...
-[pyvuejs | 2020-07-22T00:13:01Z] INFO: Starting pyvuejs application...
-[pyvuejs | 2020-07-22T00:13:03Z] INFO: Webview is loaded
-[pyvuejs | 2020-07-22T00:13:09Z] INFO: Shutting down background server...
+[pyvuejs | 2020-07-28T23:38:37Z] INFO: Start server on background...
+[pyvuejs | 2020-07-28T23:38:37Z] INFO: Setting up webview...
+[pyvuejs | 2020-07-28T23:38:37Z] INFO: Webview is loaded
+Running on http://0.0.0.0:8000 (CTRL + C to quit)
+[pyvuejs | 2020-07-28T23:39:26Z] INFO: Shutting down background server...
+
+[pycefsharp console output]
+[0728/233838.805:INFO:CONSOLE(14)] "[pyvuejs | 2020-07-28T23:38:38Z] INFO: Model 127.0.0.1/main/mainApp created", source: http://127.0.0.1:8000/static/pyvuejs.utils.js (14)
+[0728/233838.806:INFO:CONSOLE(14)] "[pyvuejs | 2020-07-28T23:38:38Z] INFO: View 127.0.0.1/main loaded", source: http://127.0.0.1:8000/static/pyvuejs.utils.js (14)
 ```
 <br>
 
@@ -97,36 +120,12 @@ python .\manage.py run --host=127.0.0.1 --port=8080 --mode=standalone --window-s
 python .\manage.py stop
 
 [server console output]
-[pyvuejs | 2020-07-21T21:01:44Z] INFO: App is shutting down...
-```
-<br>
-
-### create, remove resources from cli
-- plugin, folder, file is available by type argument
-- default directory of plugin is <b>plugins</b>
-- default directory of other resources is <b>app root</b>
-```powershell
-<# create #>
-python .\manage.py create --type=plugin --name=plugin1
-
-[console output]
-[pyvuejs | 2020-07-21T21:05:55Z] INFO: Creating plugin plugin1...
-[pyvuejs | 2020-07-21T21:05:55Z] INFO: Plugin plugin1 is ready!
-
-<# remove #>
-python .\manage.py remove --type=plugin --name=plugin1
-
-[console output]
-[pyvuejs | 2020-07-21T21:09:09Z] INFO: Removing plugin plugin1...
-[pyvuejs | 2020-07-21T21:09:09Z] INFO: Plugin plugin1 is removed!
+[pyvuejs | 2020-07-28T23:43:35Z] INFO: Server is shutting down...
 ```
 <br>
 <br>
 
-# PVUE editing guide
-pvue file is a single view file against with vue file
-<br>
-
+# VIEW editing guide
 ### prefix(<i>optional</i>, default = "view")
 - prefix defines pvue is view or component
 ```html
@@ -157,70 +156,16 @@ pvue file is a single view file against with vue file
 ```
 <br>
 
-### model(<b>required</b>)
-- model block is server-side part of pvue
-- code style is <i>python</i>, it's sensitive to <b>tabs</b>
-```python
-<model>
-Model app1:
-    # variables
-    testVar = 10
-    # to upload variable too session
-    sharedVar:session = 30
-
-    # event bind
-    @event("load")
-    def onApp1Load(self, session):
-        self.testVar = 20
-        # invoke to session variable
-        session["sharedVar"] = 50
-
-    # compute methods
-    @method
-    # to use session, add "session" argument to function
-    def sub_testVar(self, session):
-        # can import custom modules from app directory
-        from plugins import *
-
-        # can compute variables
-        self.testVar -= 1
-
-        # defined by ":session", use it without define to session in code
-        print(session["sharedVar"])
-</model>
-```
-- connect to vue properties
-    - currently, <b>computed</b> and <b>method</b> are able
-    - add decorator on top of function
-    ```python
-    @method
-    def get_sample(self):
-        self.sample = "It's sample!"
-    ```
-- bind to events
-    - currently, <b>load</b> and <b>show</b> are able
-    - add event decorator on top of function
-    ```python
-    @event("load")
-    def load_sample(self):
-        print("onload!")
-
-    @event("show")
-    def show_sample(self):
-        print("onshow!")
-    ```
-<br>
-
-### resource(<i>optional</i>)
-- resource block loads app's static files
+### resources(<i>optional</i>)
+- resources block loads app's static files
 - app's static url is <b>"/app"</b>
 ```html
-<resource>
+<resources>
     <!-- css -->
     <link rel="stylesheet" href="/app/[staticFileName]">
     <!-- js -->
     <script type="text/javascript" src="/app/[staticFileName]"></script>
-</resource>
+</resources>
 ```
 <br>
 
@@ -228,22 +173,43 @@ Model app1:
 - style block is style part of template block
 ```html
 <style>
-div#app1 {
+div#mainApp {
     /* styles */
 }
 </style>
 ```
 <br>
+<br>
 
-### script(<i>optional</i>)
-- script block runs in page
-- custom events, attributes can be set in script block
-```html
-<script>
-    /* scripts */
-</script>
+# Model editing guide
+- Model base class is in <b>pyvuejs.models</b>
+- bindings are in <b>pyvuejs.binders</b>
+```python
+from pyvuejs.models import Model
+from pyvuejs.binder import model_variable, event, method
+
+class mainApp(Model):
+    """variables
+    - model_variable: variable for model locally
+    - session_variable: variable for session(global)
+    """
+    username:str = model_variable("")
+
+    """events
+    - load: when model init
+    - show: when view show
+    """
+    @event("load")
+    def onload(self):
+        print("hello, pyvuejs!")
+
+    """methods
+    any method in Model decorated "method"
+    """
+    @method
+    def change_username(self):
+        self.username = "pyvuejs"
 ```
-
 <br>
 <br>
 
@@ -253,9 +219,11 @@ div#app1 {
 - [x] multi locational data binding(V 0.2.0)
 - [x] dataSession (V 0.2.0)
 - [ ] sync variables during method runs
+    - only session available
 - add vue properties
     - [x] method (V 0.1.0)
-    - [x] computed (V 0.2.0)
+    - ~~[x] computed (V 0.2.0)~~
+        - removed (V 0.4.0)
 
 <br>
 <br>
@@ -365,3 +333,18 @@ pyvuejs is MIT license
 - V 0.3.4 [2020/07/22]
     - change UI module from PySide2 to pycefsharp
         - appView can be invoked, too
+<br>
+
+- V 0.4.0 [2020/07/28]
+    - change structure of project
+        - project now managed by app
+            - app has single <b>view.html</b> file
+            - app can has multiple models in <b>models.py</b>
+        - project information managed by <b>.config</b> file
+    - cli changed
+        - cli provides as follows
+            - <b>create-project</b>
+            - <b>create-app</b>
+            - <b>remove-app</b>
+            - <b>start</b>
+            - <b>stop</b>

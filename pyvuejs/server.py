@@ -1,347 +1,334 @@
 # -*- coding: utf-8 -*-
-# import modules
-import os, sys, json, signal
-from threading import Timer
+import os, sys, gc
 from collections import OrderedDict
-from datetime import datetime
-from glob import glob
 from copy import copy, deepcopy
-import subprocess
-from flask import Flask, Blueprint, redirect, request, jsonify
-from flask_socketio import SocketIO, emit
+from quart import Quart, redirect, request, jsonify
+import logging, json, json_logging
+from datetime import datetime, timedelta
+import asyncio
+
+import clr
+from System.Threading import Thread, ThreadStart, ApartmentState
 
 from . import __path__
 from .logger import Logger
-from .models import View
-from .webview import WebView
-from .interpreting import interprete_appDir
+from .interpreter import Interpreter
 
 class Server():
-    def __init__(self, appDir:str, enableLogging:bool = True, webview:WebView = None):
-        # check logging
-        self.__logging = enableLogging
+    def __init__(self, app_root:str, enable_logging:bool = True):
+        gc.enable()
+        self.__logging = enable_logging
 
-        # variables
         if self.__logging:
-            Logger.info("Prepare Server to run app...")
+            Logger.info("Preparing server...\n")
 
-        self.__webview = webview
-        self.__appDir = os.path.abspath(appDir)
+        self.__app_root = os.path.abspath(app_root)
         self.__session = {
+            "server": {
+                "mpa": OrderedDict(),
+                "upload_time": {}
+            },
             "app": {
-                "mpa": {},
-                "views": {},
-                "components": {},
-                "updatedTime": {}
+                "views": OrderedDict(),
+                "components": OrderedDict()
             },
-            "data": {
-                "mpa": {},
-                "excludes": { "id": "", "name": "" }
-            },
-            "config": {
-                "expiredTime": 1800
-            }
+            "data": OrderedDict()
+        }
+        self.__config = {
+            "expired_time": 1800
         }
 
-        self.__app = Flask(
-            "pyvue",
-            static_folder = os.path.join(__path__[0], "static"),
-            template_folder = os.path.join(__path__[0], "static")
+        self.__server = Quart(
+            "pyvuejs",
+            static_folder = os.path.join(__path__[0], "static")
         )
-        self.__app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 1
-        self.__app.secret_key = "pyvuejsApp"
-        self.__socketio = SocketIO(self.__app)
+        self.__server_thread = None
+        self.__cef_view = None
+        # self.__server.secret_key = os.urandom(16)
 
-        # view routing points
+        self.__set_routes()
+        self.__get_project_info()
+
+    def __set_routes(self):
         if self.__logging:
-            Logger.info("Setting view/component routing points...")
+            Logger.info("Setting routing points...")
 
-        @self.__app.after_request
-        def add_header(response):
-            response.headers["Cache-Control"] = "no-store"
+        @self.__server.before_request
+        def job_before_request():
+            gc.collect()
+
+        @self.__server.after_request
+        def job_after_request(response):
+            gc.collect()
             return response
 
-        @self.__app.route("/views/<viewName>")
-        def showView(viewName):
-            if viewName in self.__session["app"]["views"].keys():
-                viewId = request.remote_addr
-                if not viewId in self.__session["data"]["mpa"].keys():
-                    self.__session["data"]["mpa"][viewId] = {}
+        @self.__server.route("/")
+        def show_index():
+            return redirect("/views/main")
 
-                if not viewId in self.__session["app"]["mpa"].keys():
-                    self.__session["app"]["mpa"][viewId] = OrderedDict()
-
-                if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    try:
-                        self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["views"][viewName])
-                    except TypeError as err:
-                        if err.args[0].startswith("can't pickle"):
-                            self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["views"][viewName])
-                        else:
-                            print(err.args)
-
-                    for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
-                        for varName, var in model.sessions.items():
-                            self.__session["data"]["mpa"][viewId][varName] = var
-
-                        if "load" in model.events.keys():
-                            model.events["load"](self.__session["data"]["mpa"][viewId])
-
-                for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
-                    if "show" in model.events.keys():
-                        model.events["show"](self.__session["data"]["mpa"][viewId])
-
-                return self.__session["app"]["mpa"][viewId][viewName].render(viewId)
-            else:
-                viewNames = list(self.__session["app"]["views"].keys())
-                if viewName == "def@ltWindowed" and len(viewNames) > 0:
-                    if "main" in viewNames:
-                        return redirect("/views/main")
-                    else:
-                        return redirect("/views/{}".format(viewNames[0]))
-                else:
-                    return ""
-
-        @self.__app.route("/components/<viewName>")
-        def showComponent(viewName):
-            if viewName in self.__session["app"]["components"].keys():
-                viewId = request.remote_addr
-                if not viewId in self.__session["data"]["mpa"].keys():
-                    self.__session["data"]["mpa"][viewId] = {}
-
-                if not viewId in self.__session["app"]["mpa"].keys():
-                    self.__session["app"]["mpa"][viewId] = OrderedDict()
-
-                if not viewName in self.__session["app"]["mpa"][viewId].keys():
-                    try:
-                        self.__session["app"]["mpa"][viewId][viewName] = deepcopy(self.__session["app"]["components"][viewName])
-                    except TypeError as err:
-                        if err.args[0].startswith("can't pickle"):
-                            self.__session["app"]["mpa"][viewId][viewName] = copy(self.__session["app"]["components"][viewName])
-                        else:
-                            print(err.args)
-
-                    for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
-                        for varName, var in model.sessions.items():
-                            self.__session["data"]["mpa"][viewId][varName] = var
-
-                        if "load" in model.events.keys():
-                            model.events["load"](self.__session["data"]["mpa"][viewId])
-
-                for model in self.__session["app"]["mpa"][viewId][viewName].models.values():
-                    if "show" in model.events.keys():
-                        model.events["show"](self.__session["data"]["mpa"][viewId])
-
-                return self.__session["app"]["mpa"][viewId][viewName].render(viewId)
-            else:
-                return ""
-
-        # function routing points
-        if self.__logging:
-            Logger.info("Setting function routing points...")
-
-        @self.__app.before_first_request
-        def onFirstRequest():
-            pass
-
-        @self.__app.route("/shutdown", methods = ["POST"])
-        def onShutdown():
+        @self.__server.route("/stop", methods = ["POST"])
+        def stop_server():
             if self.__logging:
-                Logger.info("App is shutting down...")
+                Logger.info("Stopping server...")
 
             sys.exit()
 
-        @self.__app.route("/session/upload", methods = ["POST"])
-        def onSessionUpload():
-            res = json.loads(request.data)
-
-            self.__session["data"]["mpa"][res["id"]] = res["session"]
-            self.__session["data"]["excludes"]["id"] = res["id"]
-            self.__session["data"]["excludes"]["name"] = res["name"]
-            self.__session["app"]["updatedTime"][res["id"]] = datetime.now()
-
-            return jsonify({
-                "state": "success"
-            })
-
-        @self.__app.route("/session/download", methods = ["POST"])
-        def onSessionDownload():
-            res = json.loads(request.data)
-
-            try:
-                # check expiredTime
-                for viewId, updateTime in self.__session["app"]["updatedTime"].items():
-                    if not res["id"] == viewId:
-                        if (datetime.now() - updateTime).total_seconds() >= self.__session["config"]["expiredTime"]:
-                            self.__session["app"]["mpa"].pop(viewId)
-                            self.__session["data"]["mpa"].pop(viewId)
-
-                resp = {
-                    "id": self.__session["data"]["excludes"]["id"],
-                    "excludeName": self.__session["data"]["excludes"]["name"],
-                    "sessions": {}
-                }
-                for view in self.__session["app"]["mpa"][resp["id"]].values():
-                    sessionSet = {}
-                    for modelName in view.models.keys():
-                        sessionSet[modelName] = self.__session["data"]["mpa"][resp["id"]]
-
-                    resp["sessions"][view.name] = sessionSet
-
-                return jsonify(resp)
-            except KeyError:
-                return jsonify({
-                    "id": "",
-                    "excludeName": "",
-                    "sessions": {}
-                })
-
-        # socket points
         if self.__logging:
-            Logger.info("Setting socket routing points...")
+            Logger.info("Setting view/component points...")
 
-        @self.__socketio.on("feedbackPY", namespace = "/pyvuejsSocket")
-        def onFeedback(res):
-            print(res)
+        @self.__server.route("/views/<view_name>")
+        def show_view(view_name:str):
+            if view_name in self.__session["app"]["views"].keys():
+                view_id = request.remote_addr
+                if not view_id in self.__session["data"].keys():
+                    self.__session["data"][view_id] = {}
 
-        @self.__socketio.on("initViewPY", namespace = "/pyvuejsSocket")
-        def onInitView(res):
-            if res["id"] in self.__session["app"]["mpa"].keys():
-                view = self.__session["app"]["mpa"][res["id"]][res["name"]]
-                emit("initViewJS", {
-                    "id": res["id"],
-                    "name": res["name"],
-                    "session": self.__session["data"]["mpa"][res["id"]],
+                if not view_id in self.__session["server"]["mpa"].keys():
+                    self.__session["server"]["mpa"][view_id] = {}
+
+                if not view_name in self.__session["server"]["mpa"][view_id].keys():
+                    try:
+                        self.__session["server"]["mpa"][view_id][view_name] = deepcopy(self.__session["app"]["views"][view_name])
+                    except TypeError as err:
+                        if err.args[0].startswith("can't pickle"):
+                            self.__session["server"]["mpa"][view_id][view_name] = copy(self.__session["app"]["views"][view_name])
+
+                    for model in self.__session["server"]["mpa"][view_id][view_name]["models"].values():
+                        if not self.__cef_view == None:
+                            model.webview = self.__cef_view
+
+                        for var_name, variable in model.sessions.items():
+                            self.__session["data"][view_id][var_name] = variable
+
+                        if "load" in model.events.keys():
+                            model.call_event("load", self.__session["data"][view_id])
+
+                for model in self.__session["server"]["mpa"][view_id][view_name]["models"].values():
+                    if "show" in model.events.keys():
+                        model.call_event("show", self.__session["data"][view_id])
+
+                return self.__session["server"]["mpa"][view_id][view_name]["view"].render(
+                    view_id,
+                    list(self.__session["server"]["mpa"][view_id][view_name]["models"].keys())
+                )
+            else:
+                return ""
+
+        @self.__server.route("/components/<component_name>")
+        def show_component(component_name:str):
+            if component_name in self.__session["app"]["components"].keys():
+                component_id = request.remote_addr
+                if not component_id in self.__session["data"].keys():
+                    self.__session["data"][component_id] = {}
+
+                if not component_id in self.__session["server"]["mpa"].keys():
+                    self.__session["server"]["mpa"][component_id] = OrderedDict()
+
+                if not component_name in self.__session["server"]["mpa"][component_id].keys():
+                    try:
+                        self.__session["server"]["mpa"][component_id][component_name] = deepcopy(self.__session["app"]["components"][component_name])
+                    except TypeError as err:
+                        if err.args[0].startswith("can't pickle"):
+                            self.__session["server"]["mpa"][component_id][component_name] = copy(self.__session["app"]["components"][component_name])
+
+                    for model in self.__session["server"]["mpa"][component_id][component_name]["models"].values():
+                        if not self.__cef_view == None:
+                            model.webview = self.__cef_view
+
+                        for var_name, variable in model.sessions.items():
+                            self.__session["data"][component_id][var_name] = variable
+
+                        if "load" in model.events.keys():
+                            model.call_event("load", self.__session["data"][component_id])
+
+                for model in self.__session["server"]["mpa"][component_id][component_name]["models"].values():
+                    if "show" in model.events.keys():
+                        model.call_event("show", self.__session["data"][component_id])
+
+                return self.__session["server"]["mpa"][component_id][component_name]["view"].render(
+                    component_id,
+                    list(self.__session["server"]["mpa"][component_id][component_name]["models"].keys())
+                )
+            else:
+                return ""
+
+        if self.__logging:
+            Logger.info("Setting function points...")
+
+        @self.__server.route("/functions/init_view", methods = ["POST"])
+        async def job_init_view():
+            res = json.loads(await request.data)
+
+            if res["id"] in self.__session["server"]["mpa"].keys():
+                view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
+                return jsonify({
+                    "state": "success",
+                    "session": self.__session["data"][res["id"]],
                     "data": {
-                        modelName: model.variables
-                        for modelName, model in view.models.items()
-                    },
-                    "computes": {
-                        modelName: list(model.computes.keys())
-                        for modelName, model in view.models.items()
+                        model_name: model.variables
+                        for model_name, model in view_info["models"].items()
                     },
                     "methods": {
-                        modelName: list(model.methods.keys())
-                        for modelName, model in view.models.items()
+                        model_name: list(model.methods.keys())
+                        for model_name, model in view_info["models"].items()
                     }
                 })
 
-        @self.__socketio.on("compute", namespace = "/pyvuejsSocket")
-        def onCompute(res):
-            model = self.__session["app"]["mpa"][res["id"]][res["name"]].models[res["model"]]
+            return jsonify({ "state": "failed" })
 
-            for varName, value in res["variables"].items():
-                exec("model.{} = value".format(varName))
+        @self.__server.route("/functions/method", methods = ["POST"])
+        async def job_call_method():
+            res = json.loads(await request.data)
 
-            self.__session["data"]["mpa"][res["id"]] = res["session"]
-            model.computes[res["method"]](self.__session["data"]["mpa"][res["id"]])
-            
-            emit("update", {
-                "id": res["id"],
-                "name": res["name"],
-                "model": model.name,
-                "variables": model.variables,
-                "session": self.__session["data"]["mpa"][res["id"]]
-            })
+            if res["id"] in self.__session["server"]["mpa"].keys():
+                view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
+                model = view_info["models"][res["model"]]
 
-        @self.__socketio.on("method", namespace = "/pyvuejsSocket")
-        def onMethod(res):
-            model = self.__session["app"]["mpa"][res["id"]][res["name"]].models[res["model"]]
+                model.call_method(res["method"], self.__session["data"][res["id"]])
 
-            for varName, value in res["variables"].items():
-                exec("model.{} = value".format(varName))
+                return jsonify({ "state": "success" })
 
-            self.__session["data"]["mpa"][res["id"]] = res["session"]
-            model.methods[res["method"]](self.__session["data"]["mpa"][res["id"]])
-            
-            emit("update", {
-                "id": res["id"],
-                "name": res["name"],
-                "model": model.name,
-                "variables": model.variables,
-                "session": self.__session["data"]["mpa"][res["id"]]
-            })
+            return jsonify({ "state": "failed" })
 
-        if self.__logging:
-            Logger.info("Routing points are ready!\n")
+        @self.__server.route("/functions/upload_variable", methods = ["POST"])
+        async def job_upload_variable():
+            res = json.loads(await request.data)
 
-        interprete_appDir(self.__appDir, self.__app, self.__session["app"], webview, self.__logging)
-        if self.__logging:
-            Logger.info("Server is ready!\n")
+            if res["id"] in self.__session["server"]["mpa"].keys():
+                view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
+                for model_name, variables in res["variable"].items():
+                    model = view_info["models"][model_name]
+                    for var_name, value in variables.items():
+                        model.variables[var_name] = value
 
-    def __get_view_type(self, name:str) -> str:
-        if name in self.__session["app"]["views"].keys():
-            return "view"
-        elif name in self.__session["app"]["components"].keys():
-            return "component"
+                return jsonify({ "state": "success" })
 
-    def __create_viewFunc(self, fName, view):
-        return """
-def {0}():
-    return '''
-{1}
-'''
-""".format(fName, view.render())
+            return jsonify({ "state": "failed" })
 
-    def start(self, host:str = "0.0.0.0", port:int = 8080):
-        try:
-            if host in ("127.0.0.1", "localhost"):
-                host = "0.0.0.0"
+        @self.__server.route("/functions/download_variable", methods = ["POST"])
+        async def job_download_variable():
+            res = json.loads(await request.data)
 
-            if self.__logging:
-                Logger.info("Server started on \"http://{}:{}\"".format(
-                    "127.0.0.1" if host == "0.0.0.0" else host,
-                    port
-                ))
-                Logger.info("Please check Devtool to show data transfers")
-            self.__socketio.run(self.__app, host = host, port = port)
-        except KeyboardInterrupt:
-            os.remove(os.path.join(self.__appDir, ".state"))
+            if res["id"] in self.__session["server"]["mpa"].keys():
+                view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
+                return jsonify({
+                    "state": "success",
+                    "variable": {
+                        model_name: model.variables
+                        for model_name, model in view_info["models"].items()
+                    }
+                })
 
-class WindowedServer():
-    def __init__(self, enableLogging:bool = True):
-        self.__logging = enableLogging
+            return jsonify({ "state": "failed" })
 
-    def __appview_show(self):
-        if self.__logging:
-            Logger.info("Webview is ready!")
+        @self.__server.route("/functions/upload_session", methods = ["POST"])
+        async def job_upload_session():
+            res = json.loads(await request.data)
 
-    def __appview_closed(self):
-        if self.__logging:
-            Logger.info("Shutting down background server...")
+            if res["id"] in self.__session["data"].keys():
+                self.__session["data"][res["id"]] = res["session"]
+                self.__session["server"]["upload_time"][res["id"]] = datetime.now()
 
-        subprocess.Popen([sys.executable, ".\manage.py", "stop"])
-        os.kill(os.getpid(), signal.SIGTERM)
+                return jsonify({ "state": "success" })
 
-    def __start_server_background(self, appDir:str, port:int):
-        Server(appDir, False, self.__appView).start("127.0.0.1", port)
+            return jsonify({ "state": "failed" })
 
-    def start(self, appDir:str, port:int = 8080, window_size:list = [900, 600]):
-        from pycefsharp.cef import CefApp
+        @self.__server.route("/functions/download_session", methods = ["POST"])
+        async def job_download_session():
+            res = json.loads(await request.data)
+
+            for view_id in self.__session["data"].keys():
+                if view_id in self.__session["server"]["upload_time"]:
+                    last_update_time = self.__session["server"]["upload_time"][view_id]
+                    time_delta = timedelta(seconds = self.__config["expired_time"])
+
+                    if last_update_time + time_delta < datetime.now():
+                        self.__session["data"].pop(view_id)
+                        self.__session["server"]["mpa"].pop(view_id)
+                else:
+                    self.__session["server"]["upload_time"][view_id] = datetime.now()
+
+            if res["id"] in self.__session["data"].keys():
+                return jsonify({
+                    "state": "success",
+                    "session": self.__session["data"][res["id"]]
+                })
+
+            return jsonify({ "state": "failed" })
 
         if self.__logging:
-            Logger.info("Setting up webview...")
+            Logger.info("finished\n")
 
-        appIcon = os.path.join(appDir, "static", "favicon.ico")
-        if not os.path.exists(appIcon):
-            appIcon = os.path.join(__path__[0], "static", "favicon.ico")
+    def __get_project_info(self):
+        project_info = Interpreter(self.__app_root, self.__server, self.__logging).interprete()
+        for view_name, view_info in project_info.items():
+            self.__session["app"]["{}s".format(view_info["view"].prefix)][view_name] = view_info
 
-        # self.__qtApp.setWindowIcon(QIcon(appIcon))
-        self.__appView = WebView(
-            "http://127.0.0.1:{}/views/def@ltWindowed".format(port),
-            os.path.basename(appDir),
-            appIcon,
-            (-1, -1, window_size[0], window_size[1])
+    def __start_thread(self):
+        self.__server.run(
+            host = self.__config["host"],
+            port = self.__config["port"],
+            debug = False
         )
-        self.__appView._cef_form.IsMdiContainer = True
-        self.__appView.on_show = self.__appview_show
-        self.__appView.on_close = self.__appview_closed
 
+    def start(self, host:str, port:int, no_wait:bool = False):
+        # json_logging.ENABLE_JSON_LOGGING = True
+        # json_logging.init_quart()
+        # json_logging.init_request_instrument(self.__server)
+
+        logging.getLogger("quart.serving").setLevel(logging.CRITICAL)
+
+        self.__config["host"] = "0.0.0.0" if host in ("127.0.0.1", "localhost") else host
+        self.__config["port"] = port
         if self.__logging:
-            Logger.info("Start server on background...")
+            Logger.info("Server started on \"http://{}:{}/\"".format(
+                "127.0.0.1" if host == "0.0.0.0" else host, port
+            ))
+            Logger.info("Please check Devtool to show data transfers")
 
-        os.chdir(appDir)
-        self.__timer = Timer(1, self.__start_server_background, (appDir, port))
-        self.__timer.start()
+        self.__server_thread = Thread(ThreadStart(self.__start_thread))
+        self.__server_thread.SetApartmentState(ApartmentState.STA)
+        self.__server_thread.Start()
 
-        CefApp().Run(self.__appView)
+        if not no_wait:
+            try:
+                while True:
+                    pass
+            except KeyboardInterrupt:
+                pass
+
+            self.stop()
+
+    def start_standalone(self, host:str, port:int):
+        from pycefsharp.cef import CefApp, CefView
+
+        Logger.info("Start server on background...")
+        self.start(host, port, True)
+
+        Logger.info("Setting up webview...")
+        webview_icon = os.path.join(self.__app_root, "static", "favicon.ico")
+        if not os.path.exists(webview_icon):
+            webview_icon = os.path.join(__path__[0], "static", "favicon.ico")
+
+        self.__cef_view = CefView(
+            "http://127.0.0.1:{}/".format(port),
+            os.path.basename(self.__app_root),
+            icon = webview_icon, geometry = [-1, -1, 950, 650]
+        )
+
+        Logger.info("Webview is loaded")
+        CefApp().Run(self.__cef_view)
+
+        Logger.info("Shutting down background server...")
+        self.stop()
+
+    def stop(self):
+        import sqlite3
+        con = sqlite3.connect(os.path.join(self.__app_root, ".config"))
+        cursor = con.cursor()
+        cursor.execute("delete from `state`;")
+        cursor.close()
+        con.close()
+
+        self.__server_thread.Abort()
+        sys.exit()
