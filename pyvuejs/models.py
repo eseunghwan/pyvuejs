@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import types
+from typing import Union
 from inspect import signature
-from pycefsharp.cef import CefView
 from threading import Thread
+
+from .webview import Webwindow, WebDialog
 
 class Model():
     __class_type__ = "model"
-    webview:CefView = None
+    app_view:Union[Webwindow, WebDialog] = None
 
     def __init__(self):
         self.__call_info = {}
@@ -17,7 +19,6 @@ class Model():
                 may_var = eval("self.{}".format(mname))
                 if "__bind_info__" in dir(may_var):
                     bind_info = may_var.__bind_info__
-                    print(mname, bind_info)
                     
                     if bind_info["type"] == "variable":
                         self.__variables[mname] = may_var.value

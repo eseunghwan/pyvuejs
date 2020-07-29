@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
-import os, sys, gc
+import os, sys, signal, gc
 from collections import OrderedDict
 from copy import copy, deepcopy
 from flask import Flask, redirect, request, jsonify, __path__ as __flask_path__
 import logging, json, json_logging
 from datetime import datetime, timedelta
 from threading import Thread
-import webview as pywebview
 
-from . import __path__
+from . import __path__, webview
 from .logger import Logger
 from .interpreter import Interpreter
 
@@ -41,7 +40,7 @@ class Server():
             static_folder = os.path.join(__path__[0], "static")
         )
         self.__server_thread = None
-        self.__cef_view = None
+        self.__webview = None
         # self.__server.secret_key = os.urandom(16)
 
         self.__set_routes()
@@ -88,8 +87,8 @@ class Server():
                     self.__copy_model(view_id, "view", view_name)
 
                     for model in self.__session["server"]["mpa"][view_id][view_name]["models"].values():
-                        if not self.__cef_view == None:
-                            model.webview = self.__cef_view
+                        if not self.__webview == None:
+                            model.webview = self.__webview
 
                         for var_name, variable in model.sessions.items():
                             self.__session["data"][view_id][var_name] = variable
@@ -122,8 +121,8 @@ class Server():
                     self.__copy_model(component_id, "component", component_name)
 
                     for model in self.__session["server"]["mpa"][component_id][component_name]["models"].values():
-                        if not self.__cef_view == None:
-                            model.webview = self.__cef_view
+                        if not self.__webview == None:
+                            model.webview = self.__webview
 
                         for var_name, variable in model.sessions.items():
                             self.__session["data"][component_id][var_name] = variable
@@ -296,18 +295,18 @@ class Server():
         self.start(host, port, True)
 
         Logger.info("Setting up webview...")
-        webview_icon = os.path.join(self.__app_root, "static", "favicon.ico")
+        webview_icon = os.path.join(self.__app_root, "static", "favicon.png")
         if not os.path.exists(webview_icon):
-            webview_icon = os.path.join(__path__[0], "static", "favicon.ico")
+            webview_icon = os.path.join(__path__[0], "static", "favicon.png")
 
-        pywebview.create_window(
+        self.__webview = webview.create_window(
             os.path.basename(self.__app_root),
             "http://127.0.0.1:{}/".format(port),
             width = 950, height = 650
         )
 
         Logger.info("Webview is loaded")
-        pywebview.start()
+        webview.start(webview_icon)
 
         Logger.info("Shutting down background server...")
         self.stop()
@@ -320,4 +319,4 @@ class Server():
         cursor.close()
         con.close()
 
-        sys.exit()
+        os.kill(os.getpid(), signal.SIGTERM)

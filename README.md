@@ -355,3 +355,7 @@ pyvuejs is MIT license
 
 - V 0.4.2 [2020/07/29]
     - change webview frontend from pycefsharp to pywebview
+
+- V 0.4.3 [2020/07/29]
+    - change webview frontend from pywebview to PySide2
+    - child window appears properly
