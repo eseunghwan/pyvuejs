@@ -2,7 +2,7 @@
 import os, sys, gc
 from collections import OrderedDict
 from copy import copy, deepcopy
-from quart import Quart, redirect, request, jsonify
+from flask import Flask, redirect, request, jsonify
 import logging, json, json_logging
 from datetime import datetime, timedelta
 import asyncio
@@ -38,7 +38,7 @@ class Server():
             "expired_time": 1800
         }
 
-        self.__server = Quart(
+        self.__server = Flask(
             "pyvuejs",
             static_folder = os.path.join(__path__[0], "static")
         )
@@ -156,8 +156,8 @@ class Server():
             Logger.info("Setting function points...")
 
         @self.__server.route("/functions/init_view", methods = ["POST"])
-        async def job_init_view():
-            res = json.loads(await request.data)
+        def job_init_view():
+            res = json.loads(request.data)
 
             if res["id"] in self.__session["server"]["mpa"].keys():
                 view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
@@ -177,8 +177,8 @@ class Server():
             return jsonify({ "state": "failed" })
 
         @self.__server.route("/functions/method", methods = ["POST"])
-        async def job_call_method():
-            res = json.loads(await request.data)
+        def job_call_method():
+            res = json.loads(request.data)
 
             if res["id"] in self.__session["server"]["mpa"].keys():
                 view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
@@ -191,8 +191,8 @@ class Server():
             return jsonify({ "state": "failed" })
 
         @self.__server.route("/functions/upload_variable", methods = ["POST"])
-        async def job_upload_variable():
-            res = json.loads(await request.data)
+        def job_upload_variable():
+            res = json.loads(request.data)
 
             if res["id"] in self.__session["server"]["mpa"].keys():
                 view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
@@ -206,8 +206,8 @@ class Server():
             return jsonify({ "state": "failed" })
 
         @self.__server.route("/functions/download_variable", methods = ["POST"])
-        async def job_download_variable():
-            res = json.loads(await request.data)
+        def job_download_variable():
+            res = json.loads(request.data)
 
             if res["id"] in self.__session["server"]["mpa"].keys():
                 view_info = self.__session["server"]["mpa"][res["id"]][res["name"]]
@@ -222,8 +222,8 @@ class Server():
             return jsonify({ "state": "failed" })
 
         @self.__server.route("/functions/upload_session", methods = ["POST"])
-        async def job_upload_session():
-            res = json.loads(await request.data)
+        def job_upload_session():
+            res = json.loads(request.data)
 
             if res["id"] in self.__session["data"].keys():
                 self.__session["data"][res["id"]] = res["session"]
@@ -234,8 +234,8 @@ class Server():
             return jsonify({ "state": "failed" })
 
         @self.__server.route("/functions/download_session", methods = ["POST"])
-        async def job_download_session():
-            res = json.loads(await request.data)
+        def job_download_session():
+            res = json.loads(request.data)
 
             for view_id in self.__session["data"].keys():
                 if view_id in self.__session["server"]["upload_time"]:
@@ -272,11 +272,10 @@ class Server():
         )
 
     def start(self, host:str, port:int, no_wait:bool = False):
-        # json_logging.ENABLE_JSON_LOGGING = True
-        # json_logging.init_quart()
-        # json_logging.init_request_instrument(self.__server)
+        json_logging.init_flask(enable_json = True)
+        json_logging.init_request_instrument(self.__server)
 
-        logging.getLogger("quart.serving").setLevel(logging.CRITICAL)
+        logging.getLogger("quart.serving").setLevel(logging.ERROR)
 
         self.__config["host"] = "0.0.0.0" if host in ("127.0.0.1", "localhost") else host
         self.__config["port"] = port

@@ -128,7 +128,7 @@ class pyvuejs {
     }
 
     __start_session_refresh() {
-        this.__sessionTick = setInterval(this.__download_session_interval, 500, this.__id, this.__vms);
+        this.__sessionTick = setInterval(this.__download_session_interval, 100, this.__id, this.__vms);
     }
 
     __stop_session_refresh() {

@@ -348,3 +348,7 @@ pyvuejs is MIT license
             - <b>remove-app</b>
             - <b>start</b>
             - <b>stop</b>
+
+- V 0.4.1 [2020/07/29]
+    - remove unnecessary requirements
+    - change session refresh interval from 0.5s to 0.1s

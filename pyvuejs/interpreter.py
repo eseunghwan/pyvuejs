@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os, sys, types
 from glob import glob
-from quart import Blueprint
+from flask import Blueprint
 from .logger import Logger
 from .models import View, Model
 import importlib

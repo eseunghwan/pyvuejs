@@ -1,5 +1,5 @@
-quart
+flask
 requests
 json-logging
-pyinstaller
+pythonnet
 pycefsharp
