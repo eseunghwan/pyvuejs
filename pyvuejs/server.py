@@ -302,7 +302,7 @@ class Server():
 
         pywebview.create_window(
             os.path.basename(self.__app_root),
-            "http://127.0.0.1:{}/".format(port),,
+            "http://127.0.0.1:{}/".format(port),
             width = 950, height = 650
         )
 
