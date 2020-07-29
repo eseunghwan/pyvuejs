@@ -2,18 +2,22 @@
 import types
 from inspect import signature
 from pycefsharp.cef import CefView
+from threading import Thread
 
 class Model():
     __class_type__ = "model"
     webview:CefView = None
 
     def __init__(self):
+        self.__call_info = {}
+
         self.__variables, self.__events, self.__methods, self.__sessions = {}, {}, {}, {}
         for mname in dir(self):
             if not mname.startswith("__") and not mname.startswith("_Model__"):
                 may_var = eval("self.{}".format(mname))
                 if "__bind_info__" in dir(may_var):
                     bind_info = may_var.__bind_info__
+                    print(mname, bind_info)
                     
                     if bind_info["type"] == "variable":
                         self.__variables[mname] = may_var.value
@@ -23,6 +27,15 @@ class Model():
                         self.__methods[mname] = may_var
                     elif bind_info["type"] == "event":
                         self.__events[bind_info["name"]] = may_var
+
+    def __set_variables(self):
+        variable_names = list(self.__variables.keys())
+
+        for v_name in variable_names:
+            self.__variables[v_name] = eval("self.{}".format(v_name))
+
+            if "__bind_info__" in dir(self.__variables[v_name]):
+                self.__variables[v_name] = self.__variables[v_name].value
 
     @property
     def variables(self) -> dict:
@@ -40,21 +53,35 @@ class Model():
     def events(self) -> dict:
         return self.__events
 
-    def call_event(self, event_name:str, session = None):
-        event = self.events[event_name]
-        event_params = signature(event).parameters
-        if "session" in event_params.keys():
-            event(session)
+    def __call_function(self):
+        if self.__call_info["call_type"] == "event":
+            call = self.events[self.__call_info["call_name"]]
         else:
-            event()
+            call = self.methods[self.__call_info["call_name"]]
+
+        call_params = signature(call).parameters
+        if "session" in call_params.keys():
+            call(self.__call_info["session"])
+        else:
+            call()
+
+        self.__set_variables()
+
+    def call_event(self, event_name:str, session = None):
+        self.__call_info["call_type"] = "event"
+        self.__call_info["call_name"] = event_name
+        self.__call_info["session"] = session
+
+        thread = Thread(target = self.__call_function)
+        thread.start()
 
     def call_method(self, method_name:str, session = None):
-        method = self.methods[method_name]
-        method_params = signature(method).parameters.keys()
-        if "session" in method_params or "session_data" in method_params:
-            method(session)
-        else:
-            method()
+        self.__call_info["call_type"] = "method"
+        self.__call_info["call_name"] = method_name
+        self.__call_info["session"] = session
+
+        thread = Thread(target = self.__call_function)
+        thread.start()
 
 class View():
     def __init__(self, prefix:str, view_name:str, template:str, resources:str, style:str):

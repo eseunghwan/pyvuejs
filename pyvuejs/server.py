@@ -2,13 +2,11 @@
 import os, sys, gc
 from collections import OrderedDict
 from copy import copy, deepcopy
-from flask import Flask, redirect, request, jsonify
+from flask import Flask, redirect, request, jsonify, __path__ as __flask_path__
 import logging, json, json_logging
 from datetime import datetime, timedelta
-import asyncio
-
-import clr
-from System.Threading import Thread, ThreadStart, ApartmentState
+from threading import Thread
+import webview as pywebview
 
 from . import __path__
 from .logger import Logger
@@ -87,11 +85,7 @@ class Server():
                     self.__session["server"]["mpa"][view_id] = {}
 
                 if not view_name in self.__session["server"]["mpa"][view_id].keys():
-                    try:
-                        self.__session["server"]["mpa"][view_id][view_name] = deepcopy(self.__session["app"]["views"][view_name])
-                    except TypeError as err:
-                        if err.args[0].startswith("can't pickle"):
-                            self.__session["server"]["mpa"][view_id][view_name] = copy(self.__session["app"]["views"][view_name])
+                    self.__copy_model(view_id, "view", view_name)
 
                     for model in self.__session["server"]["mpa"][view_id][view_name]["models"].values():
                         if not self.__cef_view == None:
@@ -125,11 +119,7 @@ class Server():
                     self.__session["server"]["mpa"][component_id] = OrderedDict()
 
                 if not component_name in self.__session["server"]["mpa"][component_id].keys():
-                    try:
-                        self.__session["server"]["mpa"][component_id][component_name] = deepcopy(self.__session["app"]["components"][component_name])
-                    except TypeError as err:
-                        if err.args[0].startswith("can't pickle"):
-                            self.__session["server"]["mpa"][component_id][component_name] = copy(self.__session["app"]["components"][component_name])
+                    self.__copy_model(component_id, "component", component_name)
 
                     for model in self.__session["server"]["mpa"][component_id][component_name]["models"].values():
                         if not self.__cef_view == None:
@@ -264,6 +254,13 @@ class Server():
         for view_name, view_info in project_info.items():
             self.__session["app"]["{}s".format(view_info["view"].prefix)][view_name] = view_info
 
+    def __copy_model(self, view_id:str, view_prefix:str, view_name:str):
+        try:
+            self.__session["server"]["mpa"][view_id][view_name] = deepcopy(self.__session["app"]["{}s".format(view_prefix)][view_name])
+        except TypeError as err:
+            if err.args[0].startswith("can't pickle"):
+                self.__session["server"]["mpa"][view_id][view_name] = copy(self.__session["app"]["{}s".format(view_prefix)][view_name])
+
     def __start_thread(self):
         self.__server.run(
             host = self.__config["host"],
@@ -272,10 +269,7 @@ class Server():
         )
 
     def start(self, host:str, port:int, no_wait:bool = False):
-        json_logging.init_flask(enable_json = True)
-        json_logging.init_request_instrument(self.__server)
-
-        logging.getLogger("quart.serving").setLevel(logging.ERROR)
+        logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
         self.__config["host"] = "0.0.0.0" if host in ("127.0.0.1", "localhost") else host
         self.__config["port"] = port
@@ -285,9 +279,8 @@ class Server():
             ))
             Logger.info("Please check Devtool to show data transfers")
 
-        self.__server_thread = Thread(ThreadStart(self.__start_thread))
-        self.__server_thread.SetApartmentState(ApartmentState.STA)
-        self.__server_thread.Start()
+        self.__server_thread = Thread(target = self.__start_thread)
+        self.__server_thread.start()
 
         if not no_wait:
             try:
@@ -299,8 +292,6 @@ class Server():
             self.stop()
 
     def start_standalone(self, host:str, port:int):
-        from pycefsharp.cef import CefApp, CefView
-
         Logger.info("Start server on background...")
         self.start(host, port, True)
 
@@ -309,14 +300,14 @@ class Server():
         if not os.path.exists(webview_icon):
             webview_icon = os.path.join(__path__[0], "static", "favicon.ico")
 
-        self.__cef_view = CefView(
-            "http://127.0.0.1:{}/".format(port),
+        pywebview.create_window(
             os.path.basename(self.__app_root),
-            icon = webview_icon, geometry = [-1, -1, 950, 650]
+            "http://127.0.0.1:{}/".format(port),,
+            width = 950, height = 650
         )
 
         Logger.info("Webview is loaded")
-        CefApp().Run(self.__cef_view)
+        pywebview.start()
 
         Logger.info("Shutting down background server...")
         self.stop()
@@ -329,5 +320,4 @@ class Server():
         cursor.close()
         con.close()
 
-        self.__server_thread.Abort()
         sys.exit()

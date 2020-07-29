@@ -352,3 +352,6 @@ pyvuejs is MIT license
 - V 0.4.1 [2020/07/29]
     - remove unnecessary requirements
     - change session refresh interval from 0.5s to 0.1s
+
+- V 0.4.2 [2020/07/29]
+    - change webview frontend from pycefsharp to pywebview
