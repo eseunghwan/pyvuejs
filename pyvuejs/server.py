@@ -3,6 +3,7 @@ import os, sys, signal, gc
 from collections import OrderedDict
 from copy import copy, deepcopy
 from flask import Flask, redirect, request, jsonify, __path__ as __flask_path__
+# from quart import Quart, redirect, request, jsonify, __path__ as __quart_path__
 import logging, json, json_logging
 from datetime import datetime, timedelta
 from threading import Thread
@@ -35,6 +36,7 @@ class Server():
             "expired_time": 1800
         }
 
+        # self.__server = Quart(
         self.__server = Flask(
             "pyvuejs",
             static_folder = os.path.join(__path__[0], "static")
@@ -50,9 +52,9 @@ class Server():
         if self.__logging:
             Logger.info("Setting routing points...")
 
-        @self.__server.before_request
-        def job_before_request():
-            gc.collect()
+        # @self.__server.before_request
+        # def job_before_request():
+        #     gc.collect()
 
         @self.__server.after_request
         def job_after_request(response):
@@ -264,11 +266,13 @@ class Server():
         self.__server.run(
             host = self.__config["host"],
             port = self.__config["port"],
-            debug = False
+            debug = False,
+            threaded = True
         )
 
     def start(self, host:str, port:int, no_wait:bool = False):
         logging.getLogger("werkzeug").setLevel(logging.ERROR)
+        # logging.getLogger("werkzeug").setLevel(logging.ERROR)
 
         self.__config["host"] = "0.0.0.0" if host in ("127.0.0.1", "localhost") else host
         self.__config["port"] = port

@@ -73,16 +73,18 @@ class Model():
         self.__call_info["call_name"] = event_name
         self.__call_info["session"] = session
 
-        thread = Thread(target = self.__call_function)
-        thread.start()
+        # thread = Thread(target = self.__call_function)
+        # thread.start()
+        self.__call_function()
 
     def call_method(self, method_name:str, session = None):
         self.__call_info["call_type"] = "method"
         self.__call_info["call_name"] = method_name
         self.__call_info["session"] = session
 
-        thread = Thread(target = self.__call_function)
-        thread.start()
+        # thread = Thread(target = self.__call_function)
+        # thread.start()
+        self.__call_function()
 
 class View():
     def __init__(self, prefix:str, view_name:str, template:str, resources:str, style:str):
