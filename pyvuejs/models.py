@@ -22,6 +22,7 @@ class Model():
                     
                     if bind_info["type"] == "variable":
                         self.__variables[mname] = may_var.value
+                        exec("self.{} = may_var.value".format(mname))
                     elif bind_info["type"] == "session":
                         self.__sessions[mname] = may_var.value
                     elif bind_info["type"] == "method":
