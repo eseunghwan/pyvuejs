@@ -25,6 +25,12 @@ class WebDialog(QDialog):
         
         if not x == None and not y == None:
             self.move(x, y)
+        else:
+            resolution = QApplication.desktop().screenGeometry()
+            self.move(
+                int((resolution.width() - self.width()) / 2),
+                int((resolution.height() - self.height()) / 2)
+            )
         
         self.resize(
             950 if width == None else width,
@@ -57,6 +63,12 @@ class Webwindow(QMainWindow):
         
         if not x == None and not y == None:
             self.move(x, y)
+        else:
+            resolution = QApplication.desktop().screenGeometry()
+            self.move(
+                int((resolution.width() - self.width()) / 2),
+                int((resolution.height() - self.height()) / 2)
+            )
         
         self.resize(
             950 if width == None else width,
