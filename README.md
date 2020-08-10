@@ -1,229 +1,118 @@
-# pyvuejs
 <p align="center">
-
+<img src="https://github.com/eseunghwan/pyvuejs/blob/master/pyvuejs/static/favicon.png?raw=true" width=100 />pyvuejs
+<br>
 <a href="https://pypi.python.org/pypi/pyvuejs">
 <img src="https://img.shields.io/pypi/v/pyvuejs.svg" /></a>
 <a href="https://travis-ci.org/eseunghwan/pyvuejs"><img src="https://travis-ci.org/eseunghwan/pyvuejs.svg?branch=master" /></a>
 </p>
-
-<br>
-<br>
+<br><br>
 
 # Install
 ### using pip
 ```powershell
 pip install pyvuejs
 ```
-### from git
-```powershell
-git clone https://github.com/eseunghwan/pyvuejs.git
-cd pyvuejs
-python setup.py install
-```
-
-<br>
-<br>
+<br><br>
 
 # Usage
-### create project with cli
+### start server by <b>main.py</b> file in project directory
 ```powershell
-python -m pyvuejs create-project --name=sample_project
-
-[console output]
-[pyvuejs | 2020-07-28T23:27:49Z] INFO: Creating pyvuejs project...
-[pyvuejs | 2020-07-28T23:27:49Z] INFO: Extracting template files...
-[pyvuejs | 2020-07-28T23:27:49Z] INFO: Project "sample_project" is ready!
+python .\main.py
 ```
-<br>
+<br><br>
 
-### manage apps with cli
-- <b>main</b> app cannot be removed
-```powershell
-<# create #>
-python .\manage.py create-app --name=sample_app
+# Config editing guide
+- config file has 2 dictionaries
+    - pages: information of apps
+    - server: server host, port information
+```python
+pages = {
+    "sample": {
+        # entry, vue, url are required
+        "entry": "src/app/main.py",
+        "vue": "src/app/index.vue", 
+        "url": "/sample",
+        "title": "sample!"
+    }
+}
 
-[console output]
-[pyvuejs | 2020-07-28T23:28:23Z] INFO: Creating pyvuejs app...
-[pyvuejs | 2020-07-28T23:28:23Z] INFO: Extracting template files...
-[pyvuejs | 2020-07-28T23:28:23Z] INFO: App "sample_app" is ready!
-
-<# remove #>
-python .\manage.py remove-app --name=sample_app
-
-[console output]
-[pyvuejs | 2020-07-28T23:28:55Z] INFO: Removing app "sample_app"...
-[pyvuejs | 2020-07-28T23:28:55Z] INFO: App "sample_app" removed!
+server = {
+    # host and port are not required
+    "host": "0.0.0.0",
+    "port": 8080
+}
 ```
-<br>
+<br><br>
 
-### start project with cli
-- default host = "0.0.0.0", port = 8000
-- both <b>host</b> and <b>port</b> are positional arguments
-```powershell
-python .\manage.py start --host=127.0.0.1 --port=8000
-
-[console output]
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Preparing server...
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting routing points...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting view/component points...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Setting function points...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting project "sample_project"...
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting app "main"...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting pvue file...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Interpreting models...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Model mainApp loaded
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Linking static to server...
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: finished
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Project is ready!
-
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Server started on "http://127.0.0.1:8000/"
-[pyvuejs | 2020-07-28T23:31:45Z] INFO: Please check Devtool to show data transfers
-Running on http://0.0.0.0:8000 (CTRL + C to quit)
-
-[web console output]
-[pyvuejs | 2020-07-28T23:32:40Z] INFO: Model 127.0.0.1/main/mainApp created
-[pyvuejs | 2020-07-28T23:32:40Z] INFO: View 127.0.0.1/main loaded
-```
-<br>
-
-### start project standalone mode
-- switch mode to <b>standalone</b>
-- host and port options are available
-- using <b>pycefsharp</b>
-```powershell
-python .\manage.py start --host=127.0.0.1 --port=8000 --mode=standalone
-
-[console output]
-[pyvuejs | 2020-07-28T23:38:37Z] INFO: Start server on background...
-[pyvuejs | 2020-07-28T23:38:37Z] INFO: Setting up webview...
-[pyvuejs | 2020-07-28T23:38:37Z] INFO: Webview is loaded
-Running on http://0.0.0.0:8000 (CTRL + C to quit)
-[pyvuejs | 2020-07-28T23:39:26Z] INFO: Shutting down background server...
-
-[pycefsharp console output]
-[0728/233838.805:INFO:CONSOLE(14)] "[pyvuejs | 2020-07-28T23:38:38Z] INFO: Model 127.0.0.1/main/mainApp created", source: http://127.0.0.1:8000/static/pyvuejs.utils.js (14)
-[0728/233838.806:INFO:CONSOLE(14)] "[pyvuejs | 2020-07-28T23:38:38Z] INFO: View 127.0.0.1/main loaded", source: http://127.0.0.1:8000/static/pyvuejs.utils.js (14)
-```
-<br>
-
-### stop server from cli
-- server can be closed by cli
-```powershell
-python .\manage.py stop
-
-[server console output]
-[pyvuejs | 2020-07-28T23:43:35Z] INFO: Server is shutting down...
-```
-<br>
-<br>
-
-# VIEW editing guide
-### prefix(<i>optional</i>, default = "view")
-- prefix defines pvue is view or component
-```html
-<!-- if pvue is view -->
-!prefix view
-<!-- if pvue is component -->
-!prefix component
-<!-- if blank, consider as view -->
-```
-<br>
-
-### template(<b>required</b>)
-- template block is shown part of pvue
-- code style is very same as <b>Vue.js</b>
+# VUE editing guide
+### same as vue.js, can support by linting
+- for now, <b>template</b>, <b>style</b> blocks are supported
 ```html
 <template>
-    <div id="app1">
-        <!-- elements -->
-        <p>{{ testVar }}</p>
-        <!-- to use session values -->
-        <p>{{ session.sharedVar }}</p>
-        <button>click me!</button>
-
-        <!-- if show components -->
-        <pvue-component endpoint="[componentName]"></pvue-component>
+    <div id="sample">
+        <p>{{ text }}</p>
     </div>
 </template>
-```
-<br>
 
-### resources(<i>optional</i>)
-- resources block loads app's static files
-- app's static url is <b>"/app"</b>
-```html
-<resources>
-    <!-- css -->
-    <link rel="stylesheet" href="/app/[staticFileName]">
-    <!-- js -->
-    <script type="text/javascript" src="/app/[staticFileName]"></script>
-</resources>
-```
-<br>
-
-### style(<i>optional</i>)
-- style block is style part of template block
-```html
 <style>
-div#mainApp {
-    /* styles */
-}
+    div#sample {
+        width: 100%;
+        height: 100%;
+    }
 </style>
 ```
-<br>
-<br>
+<br><br>
 
-# Model editing guide
-- Model base class is in <b>pyvuejs.models</b>
-- bindings are in <b>pyvuejs.binders</b>
+# App model editing guide
+- Model defines in <b>main.py</b> in app directory
+- same syntax as Vue.js javascript defines
+- get object by <b>export</b> property
 ```python
-from pyvuejs.models import Model
-from pyvuejs.binder import model_variable, event, method
+from pyvuejs import Vue
 
-class mainApp(Model):
-    """variables
-    - model_variable: variable for model locally
-    - session_variable: variable for session(global)
-    """
-    username:str = model_variable("")
+class sample():
+    def data(self):
+        # return as dictionary
+        return {
+            "text": "hello, pyvuejs!"
+        }
 
-    """events
-    - load: when model init
-    - show: when view show
-    """
-    @event("load")
-    def onload(self):
-        print("hello, pyvuejs!")
+    def methods(self):
+        def change_text(self):
+            self.text = "I'm changed!"
 
-    """methods
-    any method in Model decorated "method"
-    """
-    @method
-    def change_username(self):
-        self.username = "pyvuejs"
+        # return as dictionary
+        return {
+            "change_text": change_text
+        }
+
+# "__export__" must be defined
+__export__ = Vue.createApp(sample).mount("#sample")
 ```
 <br>
 <br>
 
+# Component editing guide
+- component defines in <b>component</b> directory
+- name of python file is not important
+- components are registered as global component
+- get object by <b>export</b> property
+```python
+from pyvuejs import Vue
+
+class sample():
+    # props are list only
+    props = [ "label" ]
+    # template is required
+    template = "<label>{{ label }}</label>"
+
+# "__export__" must be defined
+__export__ = Vue.component("sample-label", sample)
+```
+<br><br>
+
 # Todo
-- [x] enable componenting(V 0.2.0)
-    - [ ] component properties
-- [x] multi locational data binding(V 0.2.0)
-- [x] dataSession (V 0.2.0)
-- [ ] sync variables during method runs
-    - only session available
-- add vue properties
-    - [x] method (V 0.1.0)
-    - ~~[x] computed (V 0.2.0)~~
-        - removed (V 0.4.0)
+- [ ] <b>method</b>, <b>created</b>, <b>mounted</b> of component
 
 <br>
 <br>
@@ -359,3 +248,9 @@ pyvuejs is MIT license
 - V 0.4.3 [2020/07/29]
     - change webview frontend from pywebview to PySide2
     - child window appears properly
+
+- V 0.5.0 [2020/08/10]
+    - BIG CHANGES!
+        - server changes to <b>bottle</b>
+        - change project structure more likely to Vue.js
+        - separate cli to <b>pyvuejs-cli</b>

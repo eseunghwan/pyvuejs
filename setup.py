@@ -28,15 +28,13 @@ setup(
             "*.png",
             "*.css",
             "*.js",
-            "*.js.map",
-            "*.html",
-            "*.zip"
+            "*.map"
         ]
     },
     include_package_data=False,
     keywords="vue",
     name="pyvuejs",
-    packages=["pyvuejs", "pyvuejs/static"],
+    packages=["pyvuejs", "pyvuejs/core", "pyvuejs/static"],
     setup_requires=[],
     url="https://github.com/eseunghwan/pyvuejs",
     version=__version__,

@@ -1,3 +1,3 @@
-flask
-requests
+bottle
+bottle-websocket
 PySide2

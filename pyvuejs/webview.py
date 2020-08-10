@@ -116,46 +116,50 @@ class Webwindow(QMainWindow):
         current_dialog = func(title, url, name, x, y, width, height, self if parent == None else parent)
         dialogs[current_dialog.name] = current_dialog
 
-def create_window(title:str, url:str, name:str = None, x:int = None, y:int = None, width:int = None, height:int = None):
-    global windows, current_window
+class WebViewUtils():
+    @staticmethod
+    def create_window(title:str, url:str, name:str = None, x:int = None, y:int = None, width:int = None, height:int = None):
+        global windows, current_window
 
-    def _create_window(title, url, name, x, y, width, height):
-        return Webwindow(title, url, name, x, y, width, height)
+        def _create_window(title, url, name, x, y, width, height):
+            return Webwindow(title, url, name, x, y, width, height)
 
-    if not "main" in windows.keys():
-        windows["main"] = Webwindow(title, url, "main", x, y, width, height)
-        return windows["main"]
-    else:
-        current_window = None
-        res = windows["main"].create_window.emit(_create_window, title, url, name,
-            -1 if x == None else x, -1 if y == None else y,
-            -1 if width == None else width, -1 if height == None else height
-        )
-        while current_window == None:
-            pass
-
-        return current_window
-
-def create_dialog(title:str, url:str, name:str = None, x:int = None, y:int = None, width:int = None, height:int = None, parent:Webwindow = None):
-    global windows, dialogs, current_dialog
-
-    def _create_dialog(title, url, name, x, y, width, height, parent):
-        return WebDialog(title, url, name, x, y, width, height, parent)
-
-    if not "main" in windows.keys():
-        raise RuntimeError("Please create main Webwindow first!")
-    else:
-        res = windows["main"].create_dialog.emit(_create_dialog, title, url, name,
-            -1 if x == None else x, -1 if y == None else y,
-            -1 if width == None else width, -1 if height == None else height,
-            parent
-        )
-        if res:
-            while current_dialog == None:
+        if not "main" in windows.keys():
+            windows["main"] = Webwindow(title, url, "main", x, y, width, height)
+            return windows["main"]
+        else:
+            current_window = None
+            res = windows["main"].create_window.emit(_create_window, title, url, name,
+                -1 if x == None else x, -1 if y == None else y,
+                -1 if width == None else width, -1 if height == None else height
+            )
+            while current_window == None:
                 pass
 
-            return current_dialog
+            return current_window
 
-def start(app_icon:str):
-    qtApp.setWindowIcon(QIcon(app_icon))
-    qtApp.exec_()
+    @staticmethod
+    def create_dialog(title:str, url:str, name:str = None, x:int = None, y:int = None, width:int = None, height:int = None, parent:Webwindow = None):
+        global windows, dialogs, current_dialog
+
+        def _create_dialog(title, url, name, x, y, width, height, parent):
+            return WebDialog(title, url, name, x, y, width, height, parent)
+
+        if not "main" in windows.keys():
+            raise RuntimeError("Please create main Webwindow first!")
+        else:
+            res = windows["main"].create_dialog.emit(_create_dialog, title, url, name,
+                -1 if x == None else x, -1 if y == None else y,
+                -1 if width == None else width, -1 if height == None else height,
+                parent
+            )
+            if res:
+                while current_dialog == None:
+                    pass
+
+                return current_dialog
+
+    @staticmethod
+    def start(app_icon:str):
+        qtApp.setWindowIcon(QIcon(app_icon))
+        qtApp.exec_()

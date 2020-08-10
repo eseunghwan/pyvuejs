@@ -1,0 +1,31 @@
+
+div.ws-loader {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    z-index: 998;
+
+    background-color: rgba(169, 169, 169, 0.6);
+}
+
+div.ws-loader-img {
+    width: 150px !important;
+    height: 150px !important;
+    position: absolute;
+    left: calc(50% - 75px);
+    top: calc(50% - 75px);
+    z-index: 999;
+
+    background-image: url('/static/favicon.ico');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+
+    animation: flip_horizontal 1s linear infinite;
+}
+@keyframes flip_horizontal {
+    0% { transform: rotateX(0deg); }
+    50% { transform: rotateX(180deg); }
+    100% { transform: rotateX(0deg); }
+}
