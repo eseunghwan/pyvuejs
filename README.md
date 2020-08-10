@@ -1,5 +1,5 @@
 <p align="center">
-<img src="https://github.com/eseunghwan/pyvuejs/blob/master/pyvuejs/static/favicon.png?raw=true" width=100 />pyvuejs
+<img src="https://github.com/eseunghwan/pyvuejs/blob/master/logo.png?raw=true" width=250 />
 <br>
 <a href="https://pypi.python.org/pypi/pyvuejs">
 <img src="https://img.shields.io/pypi/v/pyvuejs.svg" /></a>
