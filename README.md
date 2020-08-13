@@ -21,29 +21,6 @@ python .\main.py
 ```
 <br><br>
 
-# Config editing guide
-- config file has 2 dictionaries
-    - pages: information of apps
-    - server: server host, port information
-```python
-pages = {
-    "sample": {
-        # entry, vue, url are required
-        "entry": "src/app/main.py",
-        "vue": "src/app/index.vue", 
-        "url": "/sample",
-        "title": "sample!"
-    }
-}
-
-server = {
-    # host and port are not required
-    "host": "0.0.0.0",
-    "port": 8080
-}
-```
-<br><br>
-
 # VUE editing guide
 ### same as vue.js, can support by linting
 - for now, <b>template</b>, <b>style</b> blocks are supported
@@ -63,10 +40,9 @@ server = {
 ```
 <br><br>
 
-# App model editing guide
-- Model defines in <b>main.py</b> in app directory
+# App registering guide
+- App registers in <b>main.py</b> in `project directory`/main.py
 - same syntax as Vue.js javascript defines
-- get object by <b>export</b> property
 ```python
 from pyvuejs import Vue
 
@@ -86,8 +62,11 @@ class sample():
             "change_text": change_text
         }
 
-# "__export__" must be defined
-__export__ = Vue.createApp(sample).mount("#sample")
+Vue.createApp(sample).mount("#sample")
+
+"""
+and many other apps...
+"""
 ```
 <br>
 <br>
@@ -95,8 +74,7 @@ __export__ = Vue.createApp(sample).mount("#sample")
 # Component editing guide
 - component defines in <b>component</b> directory
 - name of python file is not important
-- components are registered as global component
-- get object by <b>export</b> property
+- <b>no global components</b>
 ```python
 from pyvuejs import Vue
 
@@ -106,8 +84,28 @@ class sample():
     # template is required
     template = "<label>{{ label }}</label>"
 
-# "__export__" must be defined
-__export__ = Vue.component("sample-label", sample)
+Vue.component("sample-label", sample)
+```
+<br><br>
+
+# Routing editing guide
+- Routing options register in `project directory`/router/init.py
+```python
+from pyvuejs import Vue
+
+Vue.Router({
+    # url of public files can be registered
+    "public": {
+        "url": "/public"
+    },
+    # url of app and components can be registered
+    "sample": {
+        # url is required
+        "url": "/sample",
+        # names of components to use
+        "components": [ "sample-label" ]
+    }
+})
 ```
 <br><br>
 
@@ -124,6 +122,7 @@ pyvuejs is MIT license
 <br>
 
 # Release History
+change log of `Rev` versions deleted
 - V 0.1.0 [2020/07/17]
     - initial commit
 <br>
@@ -141,38 +140,6 @@ pyvuejs is MIT license
 - V 0.2.2 [2020/07/19]
     - bug fixes
     - parsing errors if model block is empy
-
-- V 0.2.2.Rev1 [2020/07/19]
-    - bug fixes
-    - show default favicon correctly
-
-- V 0.2.2.Rev2 [2020/07/20]
-    - remove "Variable" model
-    - change component's default size to 100% of parent
-
-- V 0.2.2.Rev3
-    - depricated
-    - revoke changes and upgrade to Rev4
-
-- V 0.2.2.Rev4 [2020/07/20]
-    - variables can upload to session by adding ":session" when it's definition
-    - session variables can be used in template by calling "sesssion" dictionary
-
-- V 0.2.2.Rev5 [2020/07/20]
-    - change component parsing logic
-    - component tag format changed to "<component name=\"[componentName]\" />"
-
-- V 0.2.2.Rev6 [2020/07/20]
-    - move multi locational strategy to initial viewpoints
-    - add event bind decoration as "@event"
-        - currently only support for "load", "show" event
-    - enabled to import python modules in app's directory
-        - base directory of modules is <b>plugins</b>
-
-- V 0.2.2.Rev7 [2020/07/20]
-    - change pyvuejs object to class with constructor
-    - bug fixed
-        - pyvuejs calls other view's models also
 <br>
 
 - V 0.3.0 [2020/07/21]
@@ -180,10 +147,6 @@ pyvuejs is MIT license
     - changes in <b>requirements.txt</b>
     - bug fixed
         - session datas are not sync from view to model
-
-- V 0.3.0.Rev1 [2020/07/21]
-    - bug fixed
-        - session datas changed in vue model are not sync to model
 
 - V 0.3.1 [2020/07/21]
     - cli changed
@@ -200,13 +163,6 @@ pyvuejs is MIT license
         - if <b>enable</b>, server log to console
         - if not, server doesn't log to console
 
-- V 0.3.2.Rev1 [2020/07/22]
-    - webview window can be invoked from model with name <b>webview</b>
-
-- V 0.3.2.Rev2 [2020/07/22]
-    - bug fixed
-        - multiple session datas upload correctly
-
 - V 0.3.3 [2020/07/22]
     - bug fixed
         - model's native functions got erros during interpreting
@@ -214,10 +170,6 @@ pyvuejs is MIT license
         - format change to normal html format, "<pyvue-component endpoint=\"componentName\"></pyvue-component>"
     - <b>webview</b> attribute changed to <b>appView</b>
     - creating a new WebView window is available from model
-
-- V 0.3.3.Rev1 [2020/07/22]
-    - bug fixed
-        - decorator text was miss-parsed
 
 - V 0.3.4 [2020/07/22]
     - change UI module from PySide2 to pycefsharp
@@ -248,9 +200,25 @@ pyvuejs is MIT license
 - V 0.4.3 [2020/07/29]
     - change webview frontend from pywebview to PySide2
     - child window appears properly
+<br>
+<hr>
+<b>※ WARNING: PROJECT SKELETON CHANGED A LOT FROM V0.5!</b>
 
 - V 0.5.0 [2020/08/10]
     - BIG CHANGES!
         - server changes to <b>bottle</b>
         - change project structure more likely to Vue.js
         - separate cli to <b>pyvuejs-cli</b>
+
+- V 0.5.1 [2020/08/10]
+    - remove unsed requirement <b>bottle-websocket</b>
+    - set server config by default if not configured
+    - add <b>default_app</b> parameter to standalone server method
+    - add <b>show_messagebox</b> method to webview
+        - not receive result now
+
+- V 0.5.1 [2020/08/11]
+    - remove <b>config.py</b>
+    - change app structure
+        - register app in `project directory`/src/main.py
+    - register routing infos in `project directory`/src/router/init.py

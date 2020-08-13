@@ -43,5 +43,19 @@ error_400 = """
 </body>
 </html>
 <br>
+"""
 
+error_404 = """
+<!DOCTYPE html>
+<html>
+<body style="width:100vw;height:100vh;margin:0px auto;overflow:hidden;">
+    <div style="width:100%;height:100%;display:flex;flex-direction:column;text-align:center;">
+        <h1>404 Not Found</h1>
+        <h3>App not found!</h3>
+        <div style="border-bottom:1px solid black;margin:20px 0px;"></div>
+        pyvuejs
+    </div>
+</body>
+</html>
+<br>
 """

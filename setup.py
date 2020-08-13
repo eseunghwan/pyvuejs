@@ -3,8 +3,11 @@
 from setuptools import setup, find_packages  # type: ignore
 from pyvuejs import __version__
 
-with open("README.md") as readme_file:
+with open("README.md", "r", encoding = "utf-8") as readme_file:
     readme = readme_file.read()
+
+with open("requirements.txt", "r", encoding = "utf-8") as require_read:
+    requires = require_read.readlines()
 
 setup(
     author="eseunghwan",
@@ -18,7 +21,7 @@ setup(
     ],
     description="Pythonic Vue.js",
     entry_points={"console_scripts": ["pyvuejs=pyvuejs.cli:main",],},
-    install_requires=open("requirements.txt").readlines(),
+    install_requires=requires,
     license="MIT license",
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -35,7 +38,7 @@ setup(
     keywords="vue",
     name="pyvuejs",
     packages=["pyvuejs", "pyvuejs/core", "pyvuejs/static"],
-    setup_requires=[],
+    setup_requires=requires,
     url="https://github.com/eseunghwan/pyvuejs",
     version=__version__,
     zip_safe=False,
