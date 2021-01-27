@@ -15,7 +15,7 @@ class VueConfig:
         self.host, self.port, self.debug, self.open_webbrowser = host, port, debug, open_webbrowser
 
 class Vue:
-    version:str = "2.0.1"
+    version:str = "2.0.2"
 
     def __init__(self):
         self.__router, self.__config = VueRouter([]), VueConfig()
@@ -29,6 +29,9 @@ class Vue:
             self.__config = obj
 
         return self
+
+    def map(self, callback, method:str = "GET", group:str = "fn"):
+        self.__bottle.route(f"/{group}/{callback.__name__}", method = method.upper(), callback = lambda: json_dumps(callback()))
 
     def __load_project(self, app_dir:str) -> str:
         public_dir = os.path.join(app_dir, "public")

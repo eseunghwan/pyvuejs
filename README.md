@@ -82,6 +82,23 @@ just call name in other view
 ```
 <br><br>
 
+# function mapping
+call map on <b>main.py</b>
+- parameters
+    - callback[required]: callback to map
+    - method[optional(default="GET")]: method of map
+    - group[optional(default="fn")]: url group of map
+```python
+def some_callback():
+    """
+    callback job
+    """
+
+Vue().map(
+    some_callback, method = "GET", group = "fn"
+).serve()
+```
+
 # Todo
 - [ ] <b>routes</b>
 
