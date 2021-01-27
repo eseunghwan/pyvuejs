@@ -29,7 +29,7 @@ python ./main.py
 # view/component editing guide
 ### same as vue.js, can support by linting
 - for now, <b>template</b>, <b>style</b>, <b>script</b> blocks are supported
-- more information from [vbuild](https://github.com/manatlan/vbuild)
+- more information on [vbuild](https://github.com/manatlan/vbuild) and [vbuild python document](https://github.com/manatlan/vbuild/blob/master/doc/PyComponent.md)
 ```html
 <!-- template block -->
 <template>

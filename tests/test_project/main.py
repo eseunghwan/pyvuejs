@@ -2,5 +2,5 @@
 from pyvuejs import Vue, VueConfig
 
 Vue().use(
-    VueConfig(open_webbrowser = True)
+    VueConfig(open_webbrowser = False)
 ).serve()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os, signal, sys, vbuild, webbrowser, http
+import inspect, importlib
 from glob import glob
 from bottle import Bottle, static_file, json_dumps
 from ._assets import assets_dir
@@ -14,10 +15,37 @@ class VueConfig:
     def __init__(self, host:str = "0.0.0.0", port:int = 47372, debug:bool = True, open_webbrowser:bool = True):
         self.host, self.port, self.debug, self.open_webbrowser = host, port, debug, open_webbrowser
 
+class VueMap:
+    @staticmethod
+    def map(callback = None):
+        def decorator(callback):
+            setattr(callback, "__map__", { "url": "/" + callback.__name__ })
+            return callback
+
+        return decorator(callback)
+
+    @staticmethod
+    def unmap(callback):
+        delattr(callback, "__map__")
+
+    def __callback_to_response(self, callback_name:str):
+        may_callback = getattr(self, callback_name)
+        if hasattr(may_callback, "__map__"):
+            try:
+                return json_dumps(may_callback())
+            except:
+                return json_dumps("")
+
+    def register(self, bottle:Bottle):
+        bottle.route(f"/{self.__class__.__name__}/<callback_name>", method = ["GET", "POST"], callback = lambda callback_name: self.__callback_to_response(callback_name))
+            
+
+
 class Vue:
-    version:str = "2.0.2"
+    version:str = "2.0.3"
 
     def __init__(self):
+        vbuild.fullPyComp = True
         self.__router, self.__config = VueRouter([]), VueConfig()
         self.__bottle = Bottle()
         self.__bottle.route("/stop", callback = lambda: os.kill(os.getpid(), signal.SIGTERM))
@@ -38,6 +66,7 @@ class Vue:
         self.__load_publics(public_dir)
 
         self.__load_assets(os.path.join(app_dir, "src", "assets"))
+        self.__load_maps(os.path.join(app_dir, "src", "maps"))
 
         @self.__bottle.route("/")
         def route_app():
@@ -80,6 +109,16 @@ class Vue:
 
     def __load_views(self, project_views_dir:str) -> str:
         return str(vbuild.render(os.path.join(project_views_dir, "*.vue")))
+
+    def __load_maps(self, project_maps_dir:str):
+        sys.path.append(project_maps_dir)
+        for map_file in glob(os.path.join(project_maps_dir, "*.py")):
+            map_file_name = os.path.splitext(os.path.basename(map_file))[0]
+            for name, attrib in importlib.import_module(map_file_name).__dict__.items():
+                if isinstance(attrib, type) and not name == "VueMap":
+                    attrib().register(self.__bottle)
+
+        sys.path.remove(project_maps_dir)
 
     def serve(self):
         @self.__bottle.route("/pyvuejs/static/<asset_file_path:path>")
