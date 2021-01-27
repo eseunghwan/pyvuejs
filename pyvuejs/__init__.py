@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
+from ._vue import Vue, VueRouter, VueConfig
 
 __author__ = "eseunghwan"
 __email__ = "shlee0920@naver.com"
-__version__ = "0.5.2"
-
-from .core._vue import VueUtils as Vue
-
+__version__ = Vue.version
 __all__ = [
-    "Vue"
+    "Vue", "VueRouter", "VueConfig"
 ]
