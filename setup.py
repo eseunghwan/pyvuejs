@@ -37,7 +37,7 @@ setup(
     include_package_data=False,
     keywords="vue",
     name="pyvuejs",
-    packages=["pyvuejs", "pyvuejs/core", "pyvuejs/static"],
+    packages=["pyvuejs", "pyvuejs/_assets"],
     setup_requires=requires,
     url="https://github.com/eseunghwan/pyvuejs",
     version=__version__,

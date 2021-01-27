@@ -1,2 +1,5 @@
 bottle
-PySide2
+vbuild
+pyscss
+lesscpy
+closure
