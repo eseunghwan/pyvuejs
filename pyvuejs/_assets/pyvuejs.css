@@ -1,0 +1,11 @@
+
+body {
+    overflow: hidden;
+}
+
+router-view > object {
+    display: block;
+    border: 0px solid black !important;
+    width: 100%;
+    height: 100vh;
+}

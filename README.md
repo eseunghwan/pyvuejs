@@ -26,6 +26,25 @@ python ./main.py
 ```
 <br><br>
 
+# serve configurations
+config update by Vue.use in <b>main.py</b>
+- parameters
+    - host[str]: host url of server(default: "0.0.0.0")
+    - port[int]: port number of server(default: 47372)
+    - debug[bool]: flag of show bottle log(default: True)
+    - open_webbrowser[bool]: flag of open browser when start(default: True)
+```python
+Vue.use(
+    VueConfig(
+        host = "0.0.0.0",
+        port = 47372,
+        debug = True,
+        open_webbrowser = True
+    )
+)
+```
+<br><br>
+
 # view/component editing guide
 ### same as vue.js, can support by linting
 - for now, <b>template</b>, <b>style</b>, <b>script</b> blocks are supported
@@ -69,48 +88,68 @@ just call name in other view
 <template>
     <div id="app">
         <div id="nav">
-            <label v-on:click="show_home">Home</label> |
-            <label v-on:click="show_about">About</label> | 
-            <label v-on:click="show_counter">Counter</label>
+            <router-link to="/Home">Home</router-link> |
+            <router-link to="/About">About</router-link> |
+            <router-link to="/Counter">Counter</router-link>
         </div>
-        <Home v-if="page == 'Home'" />
-        <About v-else-if="page == 'About'" />
-        <Counter v-else-if="page == 'Counter'" />
-        <div v-else></div>
+        <router-view/>
     </div>
 </template>
 ```
 <br><br>
 
-# function mapping
-call map on <b>main.py</b>
-- parameters
-    - callback[required]: callback to map
-    - method[optional(default="GET")]: method of map
-    - group[optional(default="fn")]: url group of map
+# events mapping
+define map class and map functions in each file of <b>maps</b>
+- if <b>debug</b> option in config, functions can be reached by "GET" and "POST". else, "POST" only
 ```python
-def some_callback():
-    """
-    callback job
-    """
+from pyvuejs import VueMap
 
-Vue().map(
-    some_callback, method = "GET", group = "fn"
-).serve()
+class Counter(VueMap):
+    count = 0
+
+    @VueMap.map
+    def get_count(self):
+        return self.count
+
+    @VueMap.map
+    def up_count(self):
+        self.count += 1
+
+    @VueMap.map
+    def down_count(self):
+        if self.count > 0:
+            self.count -= 1
 ```
+<br><br>
+
+# routes
+define route <b>path</b> and <b>component</b> in <b>router.py</b>
+```python
+from pyvuejs import Vue, VueRouter
+
+Vue.use(VueRouter([
+    {
+        "path": "/About",
+        "component": "About"
+    },
+    {
+        "path": "/Home",
+        "component": "Home"
+    },
+    {
+        "path": "/Counter",
+        "component": "Counter"
+    }
+]))
+```
+<br><br>
 
 # Todo
-- [ ] <b>routes</b>
+- [x] <b>routes</b>
 
-<br>
-<br>
+<br><br>
 
 # License
 pyvuejs is MIT license
 
 <br>
-<br>
-
-# Release History
-### 2.0.0
-- renewal version1

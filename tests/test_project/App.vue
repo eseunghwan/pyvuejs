@@ -1,14 +1,11 @@
 <template>
     <div id="app">
         <div id="nav">
-            <label v-on:click="show_home">Home</label> |
-            <label v-on:click="show_about">About</label> | 
-            <label v-on:click="show_counter">Counter</label>
+            <router-link to="/Home">Home</router-link> |
+            <router-link to="/About">About</router-link> |
+            <router-link to="/Counter">Counter</router-link>
         </div>
-        <Home v-if="page == 'Home'" />
-        <About v-else-if="page == 'About'" />
-        <Counter v-else-if="page == 'Counter'" />
-        <div v-else></div>
+        <router-view/>
     </div>
 </template>
 
@@ -34,18 +31,3 @@
     color: #42b983;
 }
 </style>
-
-<script lang="python">
-class Component:
-    def __init__(self):
-        self.page = "Home"
-
-    def show_home(self):
-        self.page = "Home"
-
-    def show_about(self):
-        self.page = "About"
-
-    def show_counter(self):
-        self.page = "Counter"
-</script>
