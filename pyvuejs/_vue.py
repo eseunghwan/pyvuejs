@@ -103,7 +103,7 @@ class VueMap:
 
 
 class Vue:
-    version:str = "2.0.5"
+    version:str = "2.0.5.post1"
     router:VueRouter = VueRouter([])
     config:VueConfig = VueConfig()
 
@@ -141,16 +141,7 @@ class Vue:
         if os.path.exists(os.path.join(project_public_dir, "favicon.ico")):
             self.__bottle.route("/favicon.ico", callback = lambda: static_file("favicon.ico", project_public_dir))
 
-        for public_file_glob in glob(os.path.join(project_public_dir, "**"), recursive = True):
-            if os.path.isabs(public_file_glob):
-                public_file_name = os.path.basename(public_file_glob)
-                public_file_path = public_file_glob
-            else:
-                public_file_name = public_file_glob
-                public_file_path = os.path.join(project_public_dir, public_file_glob)
-
-            if not os.path.isdir(public_file_path):
-                self.__bottle.route(f"/{public_file_name}", callback = lambda: static_file(public_file_name, project_public_dir))
+        self.__bottle.route(f"/<public_file_name:path>", callback = lambda public_file_name: static_file(public_file_name, project_public_dir))
 
     def __load_assets(self, project_assets_dir:str):
         self.__bottle.route("/assets/<asset_file_path:path>", callback = lambda asset_file_path: static_file(asset_file_path, project_assets_dir))
