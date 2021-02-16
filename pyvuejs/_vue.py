@@ -2,7 +2,7 @@
 import os, signal, sys, vbuild, webbrowser, http
 import inspect, importlib
 from glob import glob
-from bottle import Bottle, static_file, json_dumps
+from bottle import Bottle, static_file, json_dumps, request
 from ._assets import assets_dir
 
 
@@ -90,7 +90,10 @@ class VueMap:
         may_callback = getattr(self, callback_name)
         if hasattr(may_callback, "__map__"):
             try:
-                return json_dumps(may_callback())
+                try:
+                    return json_dumps(may_callback(request.json))
+                except:
+                    return json_dumps(may_callback())
             except:
                 return json_dumps("")
 
@@ -103,7 +106,7 @@ class VueMap:
 
 
 class Vue:
-    version:str = "2.0.5.post2"
+    version:str = "2.0.5.post3"
     router:VueRouter = VueRouter([])
     config:VueConfig = VueConfig()
 
