@@ -103,7 +103,7 @@ class VueMap:
 
 
 class Vue:
-    version:str = "2.0.5.post1"
+    version:str = "2.0.5.post2"
     router:VueRouter = VueRouter([])
     config:VueConfig = VueConfig()
 
@@ -157,11 +157,12 @@ class Vue:
         sys.path.remove(project_maps_dir)
 
     def __load_router(self, project_src_dir:str):
-        sys.path.append(project_src_dir)
-        importlib.import_module("router")
-        sys.path.remove(project_src_dir)
+        if os.path.exists(os.path.join(project_src_dir, "router.py")):
+            sys.path.append(project_src_dir)
+            importlib.import_module("router")
+            sys.path.remove(project_src_dir)
 
-        self.router.register(self.__bottle, os.path.dirname(project_src_dir))
+            self.router.register(self.__bottle, os.path.dirname(project_src_dir))
 
     def serve(self):
         @self.__bottle.route("/pyvuejs/static/<asset_file_path:path>")
